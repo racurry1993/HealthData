@@ -17,7 +17,7 @@ warnings.filterwarnings("ignore", category=FutureWarning)
 
 # --- Streamlit App Setup ---
 st.set_page_config(layout="wide", page_title="Garmin Data Dashboard")
-st.title("Garmin Data Pre-Processing & Analysis")
+st.title("Garmin AI Generated Analysis")
 st.markdown("---")
 
 # --- Function to call the Gemini API ---
@@ -36,7 +36,7 @@ def get_llm_insight_with_gemini(data_summary, cluster_summary_df, cluster_label_
                 
                 # Check for column existence before accessing
                 avg_steps = summary_row.get('totalSteps', 'N/A')
-                avg_rhr = summary_row.get('restingHeartRate_x', 'N/A')
+                avg_rhr = summary_row.get('restingHeartRate', 'N/A')
                 avg_sleep = summary_row.get('sleepTimeHours', 'N/A')
                 
                 formatted_cluster_info += (
@@ -106,7 +106,7 @@ if 'df' in st.session_state:
     
     with col1:
         # Plot 1: Resting Heart Rate over time
-        fig_rhr = px.line(df_cleaned, x="Date", y="restingHeartRate_x", title="Resting Heart Rate Over Time")
+        fig_rhr = px.line(df_cleaned, x="Date", y="restingHeartRate", title="Resting Heart Rate Over Time")
         fig_rhr.update_yaxes(rangemode="tozero")
         st.plotly_chart(fig_rhr, use_container_width=True)
         

@@ -518,5 +518,4 @@ def preprocessing_garmin_data(username, password):
     return df_cleaned
 
 
-df = preprocessing_garmin_data("racurry93@gmail.com", "Bravesr1")
-list(df.columns)
+#df = preprocessing_garmin_data("racurry93@gmail.com", "Bravesr1")
