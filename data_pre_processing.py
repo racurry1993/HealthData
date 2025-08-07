@@ -122,13 +122,13 @@ def preprocessing_garmin_data(username, password):
             sleep_df.drop_duplicates(inplace=True)
             total_sleep_df = pd.concat([total_sleep_df, sleep_df], axis=0)
         except Exception as e:
-        missed_dts.append(dt)
+            missed_dts.append(dt)
     for missed_date in missed_dts:
-    sleep_df = pd.DataFrame([api.get_sleep_data(missed_date)])
-    record_data = sleep_df.iloc[0, 0]
-    normalized_df = pd.json_normalize(record_data, sep='_')
-    normalized_df['Date'] = missed_date
-    new_total_sleep_df = pd.concat([new_total_sleep_df, normalized_df], axis=0)
+        sleep_df = pd.DataFrame([api.get_sleep_data(missed_date)])
+        record_data = sleep_df.iloc[0, 0]
+        normalized_df = pd.json_normalize(record_data, sep='_')
+        normalized_df['Date'] = missed_date
+        new_total_sleep_df = pd.concat([new_total_sleep_df, normalized_df], axis=0)
 
     t1 = set(new_total_sleep_df.columns)
     t2 = set(total_sleep_df.columns)
