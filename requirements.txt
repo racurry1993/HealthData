@@ -1,7 +1,7 @@
-pandas==2.2.3
-plotly==6.0.1
-streamlit==1.45.1
-scipy>=1.10
-matplotlib
-scikit-learn
+streamlit
+pandas
 numpy
+plotly
+scikit-learn
+garminconnect
+google-generativeai
