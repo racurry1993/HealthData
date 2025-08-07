@@ -517,3 +517,6 @@ def preprocessing_garmin_data(username, password):
     print("Created time-based features (day_of_week, is_weekend, month, day_of_year).")
     return df_cleaned
 
+
+df = preprocessing_garmin_data("racurry93@gmail.com", "Bravesr1")
+list(df.columns)

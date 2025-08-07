@@ -132,11 +132,11 @@ if 'df' in st.session_state:
     cluster_features = st.multiselect(
         "Select features for clustering:",
         options=[
-            'restingHeartRate_x', 'totalSteps', 'totalDistanceMeters', 
+            'restingHeartRate', 'totalSteps', 'totalDistanceMeters', 
             'sleepTimeHours', 'deepSleepHours', 'remSleepHours', 
             'bodyBatteryHighestValue', 'daysSinceLastWorkout'
         ],
-        default=['totalSteps', 'sleepTimeHours', 'restingHeartRate_x', 'bodyBatteryHighestValue']
+        default=['totalSteps', 'sleepTimeHours', 'restingHeartRate', 'bodyBatteryHighestValue']
     )
     
     if len(cluster_features) > 1:
@@ -210,7 +210,7 @@ if 'df' in st.session_state:
                 final_summary_dict = {
                     'total_days_tracked': len(df_cleaned),
                     'average_daily_steps': df_cleaned['totalSteps'].mean() if 'totalSteps' in df_cleaned.columns else 0,
-                    'average_resting_hr': df_cleaned['restingHeartRate_x'].mean() if 'restingHeartRate_x' in df_cleaned.columns else 0,
+                    'average_resting_hr': df_cleaned['restingHeartRate'].mean() if 'restingHeartRate' in df_cleaned.columns else 0,
                     'average_sleep_hours': df_cleaned['sleepTimeHours'].mean() if 'sleepTimeHours' in df_cleaned.columns else 0,
                 }
                 
