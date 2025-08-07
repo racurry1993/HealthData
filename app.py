@@ -60,7 +60,7 @@ def get_llm_insight_with_gemini(data_summary, cluster_summary_df, cluster_label_
             f"Here are the daily segments (clusters) identified:\n{formatted_cluster_info}"
         )
         
-        model = genai.GenerativeModel('gemini-1.0-pro') # Using a stable model
+        model = genai.GenerativeModel('gemini-2.5-pro') # Using a stable model
         response = model.generate_content(prompt)
         return response.text
     except Exception as e:
@@ -73,7 +73,7 @@ with st.sidebar:
     password = st.text_input("Password", type="password")
     
     st.header("LLM Configuration")
-    gemini_api_key = st.text_input("Gemini API Key", type="password")
+    gemini_api_key = 'AIzaSyAiaswXxN3ngfEwMRXckBmEoZHO151jRv0'
     
     st.warning("Please be aware that this application requires your Garmin Connect credentials.")
     
