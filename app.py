@@ -39,6 +39,7 @@ with st.sidebar:
                     df = preprocessing_garmin_data(username, password)
                     st.session_state['df'] = df
                     st.success("Data fetched and pre-processed successfully!")
+                    df.to_csv(f"garmin_health_data_{username}.csv", index=False)
                 except Exception as e:
                     st.error(f"Error fetching data: {e}. Please check your credentials.")
         else:
