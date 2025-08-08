@@ -145,7 +145,7 @@ if 'df' in st.session_state:
         elif st.session_state.get('cluster_info') is None:
             st.error("Please run the clustering analysis first before requesting AI insights.")
         else:
-            with st.spinner("Generating personalized AI insights with Gemini..."):
+            with st.spinner("Generating personalized AI insights with the LLM..."):
                 cluster_summary_df, cluster_label_map = st.session_state['cluster_info']
 
                 final_summary_dict = {
