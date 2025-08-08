@@ -6,3 +6,4 @@ scikit-learn
 garminconnect
 google-generativeai
 seaborn
+statsmodels
