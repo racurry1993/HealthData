@@ -7,3 +7,4 @@ garminconnect
 google-generativeai
 seaborn
 statsmodels
+gspread_dataframe
