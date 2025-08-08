@@ -268,6 +268,9 @@ def preprocessing_garmin_data(username, password):
     total_df['ActivityStartHour'] = pd.to_datetime(total_df['startTimeLocal']).dt.strftime('%H')
     total_df.rename({'steps_x':'ActivitySteps'}, inplace=True, axis=1)
     total_df = total_df.drop_duplicates(subset='Date')
+    columns_to_check = total_df.columns.drop('Date')
+    rows_to_keep = ~((total_df[columns_to_check].isnull() | (total_df[columns_to_check] == 0)).all(axis=1))
+    total_df = total_df.loc[rows_to_keep]
 
     cols_to_drop = ['latestRespirationValue','lowestRespirationValue_y','highestRespirationValue_y','latestRespirationTimeGMT',
                     'respirationAlgorithmVersion','latestSpo2ReadingTimeLocal','latestSpo2ReadingTimeGmt','startTimeGMT',
