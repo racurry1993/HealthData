@@ -101,11 +101,11 @@ def save_to_google_sheet(df, spreadsheet_name, worksheet_name):
             else:
                 # Append data without header
                 set_with_dataframe(worksheet, df, row=len(existing_data) + 1, col=1, include_column_header=False)
-            st.success("Data successfully saved to Google Sheets.")
+            st.success("Data successfully backed-up.")
         except gspread.exceptions.APIError as e:
-            st.error(f"Google Sheets API Error: {e.args[0]['message']}")
+            st.error(f"Staging API Error: {e.args[0]['message']}")
         except Exception as e:
-            st.error(f"An error occurred while saving to Google Sheets: {e}")
+            st.error(f"An error occurred while staging data: {e}")
 
 # --- User Login and Data Fetching ---
 with st.sidebar:
@@ -138,6 +138,7 @@ if 'df' in st.session_state:
         df_stage = df_cleaned.copy()
         import datetime
         df_stage['last_dw_update_date_time'] = datetime.datetime.now()
+        df_stage['Username'] = username
         save_to_google_sheet(df_stage, spreadsheet_name="Garmin_User_Data", worksheet_name="Sheet1")
         st.session_state.data_saved = True # Set the flag so it doesn't run again
 
