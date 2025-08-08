@@ -267,6 +267,7 @@ def preprocessing_garmin_data(username, password):
 
     total_df['ActivityStartHour'] = pd.to_datetime(total_df['startTimeLocal']).dt.strftime('%H')
     total_df.rename({'steps_x':'ActivitySteps'}, inplace=True, axis=1)
+    total_df = total_df.drop_duplicates()
 
     cols_to_drop = ['latestRespirationValue','lowestRespirationValue_y','highestRespirationValue_y','latestRespirationTimeGMT',
                     'respirationAlgorithmVersion','latestSpo2ReadingTimeLocal','latestSpo2ReadingTimeGmt','startTimeGMT',
@@ -515,7 +516,7 @@ def preprocessing_garmin_data(username, password):
     df_cleaned['month'] = df_cleaned['Date'].dt.month
     df_cleaned['day_of_year'] = df_cleaned['Date'].dt.dayofyear
     print("Created time-based features (day_of_week, is_weekend, month, day_of_year).")
-    return df_cleaned
+    return df_cleaned.drop_duplicates()
 
 
 #df = preprocessing_garmin_data("racurry93@gmail.com", "Bravesr1")

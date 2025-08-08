@@ -92,7 +92,7 @@ with st.sidebar:
 # --- Display Content After Data is Fetched ---
 if 'df' in st.session_state:
     df_cleaned = st.session_state['df']
-    
+    rhr_col = 'restingHeartRate' if 'restingHeartRate' in df_cleaned.columns else None
     st.header("Pre-processed Data Preview")
     st.dataframe(df_cleaned.head())
     st.info(f"The dataset contains data from {df_cleaned['Date'].min().date()} to {df_cleaned['Date'].max().date()}.")
@@ -103,7 +103,7 @@ if 'df' in st.session_state:
     st.info("The application is running AI and Machine Learning algorithms in the background to prepare data for the AI insights.")
     
     cluster_features = [
-        'restingHeartRate_x', 'totalSteps', 'totalDistanceMeters', 
+        'restingHeartRate', 'totalSteps', 'totalDistanceMeters', 
         'sleepTimeHours', 'deepSleepHours', 'remSleepHours', 
         'bodyBatteryHighestValue', 'daysSinceLastWorkout'
     ]
@@ -169,8 +169,6 @@ if 'df' in st.session_state:
     st.header("Key Health & Activity Visualizations")
     
     col1, col2 = st.columns(2)
-    
-    rhr_col = 'restingHeartRate' if 'restingHeartRate' in df_cleaned.columns else None
 
     with col1:
         # Plot 1: Resting Heart Rate over time
@@ -216,8 +214,8 @@ if 'df' in st.session_state:
         )
         st.plotly_chart(fig_avg_sleep, use_container_width=True)
         
-        # Plot 2: Sleep Time Trend with Annotations
-        fig_sleep_trend = px.line(df_sleep, x='Date', y='sleepTimeHours', title='Sleep Time Trend Over Time')
+        # Plot 2: Sleep Time Trend with Annotations and Trendline
+        fig_sleep_trend = px.line(df_sleep, x='Date', y='sleepTimeHours', title='Sleep Time Trend Over Time', trendline='ols')
         
         max_sleep_row = df_sleep.loc[df_sleep['sleepTimeHours'].idxmax()]
         min_sleep_row = df_sleep.loc[df_sleep['sleepTimeHours'].idxmin()]
@@ -228,10 +226,10 @@ if 'df' in st.session_state:
                                         text=f"Min: {min_sleep_row['sleepTimeHours']:.1f}h", showarrow=True, arrowhead=1)
         st.plotly_chart(fig_sleep_trend, use_container_width=True)
         
-        # Plot 3: Deep Sleep Percentage Trend with Annotations
+        # Plot 3: Deep Sleep Percentage Trend with Annotations and Trendline
         df_sleep['deepSleepPercentage'] = (df_sleep['deepSleepHours'] / df_sleep['sleepTimeHours']) * 100
         
-        fig_deep_sleep_trend = px.line(df_sleep, x='Date', y='deepSleepPercentage', title='Deep Sleep Percentage Trend Over Time')
+        fig_deep_sleep_trend = px.line(df_sleep, x='Date', y='deepSleepPercentage', title='Deep Sleep Percentage Trend Over Time', trendline='ols')
 
         max_ds_row = df_sleep.loc[df_sleep['deepSleepPercentage'].idxmax()]
         min_ds_row = df_sleep.loc[df_sleep['deepSleepPercentage'].idxmin()]
@@ -241,7 +239,5 @@ if 'df' in st.session_state:
         fig_deep_sleep_trend.add_annotation(x=min_ds_row['Date'], y=min_ds_row['deepSleepPercentage'],
                                             text=f"Min: {min_ds_row['deepSleepPercentage']:.1f}%", showarrow=True, arrowhead=1)
         st.plotly_chart(fig_deep_sleep_trend, use_container_width=True)
-    else:
-        st.warning("Could not find complete sleep data for plotting.")
 
     st.markdown("---")
