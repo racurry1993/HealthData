@@ -8,3 +8,4 @@ google-generativeai
 seaborn
 statsmodels
 gspread_dataframe
+gspread
