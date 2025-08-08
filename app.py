@@ -165,6 +165,33 @@ if 'df' in st.session_state:
             st.markdown(llm_output)
 
     st.markdown("---")
+
+    # --- KPI Cards Section ---
+    st.subheader("RestingHR Insights")
+    if 'ActivityPerformedToday' in df_cleaned.columns and 'totalSteps' in df_cleaned.columns and rhr_col:
+        
+        col1, col2 = st.columns(2)
+
+        # RHR KPI Card
+        with col1:
+            avg_rhr_with_activity = df_cleaned[df_cleaned['ActivityPerformedToday']][rhr_col].mean()
+            avg_rhr_without_activity = df_cleaned[~df_cleaned['ActivityPerformedToday']][rhr_col].mean()
+            
+            st.metric(label="Avg RHR (With Activity)", value=f"{avg_rhr_with_activity:.1f} bpm")
+            st.metric(label="Avg RHR (Without Activity)", value=f"{avg_rhr_without_activity:.1f} bpm")
+
+        # Steps KPI Card
+        with col2:
+            avg_steps_with_activity = df_cleaned[df_cleaned['ActivityPerformedToday']]['totalSteps'].mean()
+            avg_steps_without_activity = df_cleaned[~df_cleaned['ActivityPerformedToday']]['totalSteps'].mean()
+
+            st.metric(label="Avg Steps (With Activity)", value=f"{avg_steps_with_activity:,.0f}")
+            st.metric(label="Avg Steps (Without Activity)", value=f"{avg_steps_without_activity:,.0f}")
+    else:
+        st.warning("Could not create KPI cards. 'ActivityPerformedToday', 'totalSteps', or 'restingHeartRate' columns are missing from the data.")
+
+    st.markdown("---")
+
     # --- Data Visualization Section ---
     st.header("Key Health & Activity Visualizations")
     
