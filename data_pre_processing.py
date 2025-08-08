@@ -516,7 +516,7 @@ def preprocessing_garmin_data(username, password):
     df_cleaned['month'] = df_cleaned['Date'].dt.month
     df_cleaned['day_of_year'] = df_cleaned['Date'].dt.dayofyear
     print("Created time-based features (day_of_week, is_weekend, month, day_of_year).")
-    return df_cleaned.drop_duplicates(subset='Date')
+    return df_cleaned
 
 
 #df = preprocessing_garmin_data("racurry93@gmail.com", "Bravesr1")
