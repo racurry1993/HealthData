@@ -60,7 +60,7 @@ def get_llm_insight_with_gemini(data_summary, cluster_summary_df, cluster_label_
             f"Here are the daily segments (clusters) identified:\n{formatted_cluster_info}"
         )
         
-        model = genai.GenerativeModel('gemini-1.0-pro')
+        model = genai.GenerativeModel('gemini-2.5-pro')
         response = model.generate_content(prompt)
         return response.text
     except Exception as e:
