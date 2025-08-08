@@ -17,8 +17,6 @@ import gspread
 # Suppress the FutureWarning from sklearn
 warnings.filterwarnings("ignore", category=FutureWarning)
 
-# --- Streamlit App Setup ---
-st.set_page_config(layout="wide", page_title="Garmin Data Dashboard")
 st.markdown("""
 <style>
 .stDeployButton {
@@ -26,6 +24,9 @@ st.markdown("""
 }
 </style>
 """, unsafe_allow_html=True)
+
+# --- Streamlit App Setup ---
+st.set_page_config(layout="wide", page_title="Garmin Data Dashboard")
 st.title("Garmin AI Generated Analysis")
 st.markdown("---")
 
