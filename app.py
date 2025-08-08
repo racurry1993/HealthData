@@ -36,7 +36,7 @@ def get_llm_insight_with_gemini(data_summary, cluster_summary_df, cluster_label_
                 
                 # Check for column existence before accessing
                 avg_steps = summary_row.get('totalSteps', 'N/A')
-                avg_rhr = summary_row.get('restingHeartRate_x', 'N/A')
+                avg_rhr = summary_row.get('restingHeartRate', 'N/A')
                 avg_sleep = summary_row.get('sleepTimeHours', 'N/A')
                 
                 formatted_cluster_info += (
@@ -209,13 +209,14 @@ if 'df' in st.session_state:
             avg_sleep_by_day,
             x=avg_sleep_by_day.index,
             y='variance_score',
+            color='variance_score',
             labels={'value': 'Score', 'DayOfWeek': 'Day of Week', 'variable': 'Variance Score'},
             title='Variance between Deep Sleep and Total Sleep (> variance = worse quality sleep)'
         )
         st.plotly_chart(fig_avg_sleep, use_container_width=True)
         
         # Plot 2: Sleep Time Trend with Annotations and Trendline
-        fig_sleep_trend = px.line(df_sleep, x='Date', y='sleepTimeHours', title='Sleep Time Trend Over Time', trendline='ols')
+        fig_sleep_trend = px.scatter(df_sleep, x='Date', y='sleepTimeHours', title='Sleep Time Trend Over Time', trendline='ols', template='plotly_dark')
         
         max_sleep_row = df_sleep.loc[df_sleep['sleepTimeHours'].idxmax()]
         min_sleep_row = df_sleep.loc[df_sleep['sleepTimeHours'].idxmin()]
@@ -229,7 +230,7 @@ if 'df' in st.session_state:
         # Plot 3: Deep Sleep Percentage Trend with Annotations and Trendline
         df_sleep['deepSleepPercentage'] = (df_sleep['deepSleepHours'] / df_sleep['sleepTimeHours']) * 100
         
-        fig_deep_sleep_trend = px.line(df_sleep, x='Date', y='deepSleepPercentage', title='Deep Sleep Percentage Trend Over Time', trendline='ols')
+        fig_deep_sleep_trend = px.scatter(df_sleep, x='Date', y='deepSleepPercentage', title='Deep Sleep Percentage Trend Over Time', trendline='ols', template='plotly_dark')
 
         max_ds_row = df_sleep.loc[df_sleep['deepSleepPercentage'].idxmax()]
         min_ds_row = df_sleep.loc[df_sleep['deepSleepPercentage'].idxmin()]
