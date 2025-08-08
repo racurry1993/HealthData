@@ -182,7 +182,7 @@ if 'df' in st.session_state:
     with col2:
         # Plot 2: Daily Steps over time
         if 'totalSteps' in df_cleaned.columns:
-            fig_steps = px.line(df_cleaned, x="Date", y="totalSteps", color='activityType', title="Daily Steps Over Time")
+            fig_steps = px.line(df_cleaned, x="Date", y="totalSteps", color='ActivityPerformedToday', title="Daily Steps Over Time")
             fig_steps.update_yaxes(rangemode="tozero")
             st.plotly_chart(fig_steps, use_container_width=True)
         else:
