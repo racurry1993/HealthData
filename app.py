@@ -79,7 +79,7 @@ with st.sidebar:
     
     if st.button("Fetch Data"):
         if username and password:
-            with st.spinner("Logging in and fetching data... This may take a few minutes for a full year of data."):
+            with st.spinner("Logging in and fetching data... This may take a few minutes to return and process all of your data."):
                 try:
                     df = preprocessing_garmin_data(username, password)
                     st.session_state['df'] = df
@@ -98,86 +98,9 @@ if 'df' in st.session_state:
     st.info(f"The dataset contains data from {df_cleaned['Date'].min().date()} to {df_cleaned['Date'].max().date()}.")
     st.markdown("---")
 
-    # --- Data Visualization Section ---
-    st.header("Key Health & Activity Visualizations")
-    
-    col1, col2 = st.columns(2)
-    
-    rhr_col = 'restingHeartRate' if 'restingHeartRate' in df_cleaned.columns else None
-
-    with col1:
-        # Plot 1: Resting Heart Rate over time
-        if rhr_col:
-            fig_rhr = px.line(df_cleaned, x="Date", y=rhr_col, title="Resting Heart Rate Over Time")
-            fig_rhr.update_yaxes(rangemode="tozero")
-            st.plotly_chart(fig_rhr, use_container_width=True)
-        else:
-            st.warning("Could not find resting heart rate data for plotting.")
-            
-    with col2:
-        # Plot 2: Daily Steps over time
-        if 'totalSteps' in df_cleaned.columns:
-            fig_steps = px.line(df_cleaned, x="Date", y="totalSteps", title="Daily Steps Over Time")
-            fig_steps.update_yaxes(rangemode="tozero")
-            st.plotly_chart(fig_steps, use_container_width=True)
-        else:
-            st.warning("Could not find daily steps data for plotting.")
-
-    # --- Sleep Analysis Section ---
-    st.subheader("Sleep Analysis")
-    if all(col in df_cleaned.columns for col in ['sleepTimeHours', 'deepSleepHours', 'Date']):
-        df_sleep = df_cleaned.copy()
-        df_sleep['DayOfWeek'] = df_sleep['Date'].dt.day_name()
-        
-        # Calculate average sleep by day of week
-        avg_sleep_by_day = df_sleep.groupby('DayOfWeek')[['sleepTimeHours', 'deepSleepHours']].mean().reindex([
-            'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'
-        ])
-        
-        # Plot 1: Average sleep by day of week
-        fig_avg_sleep = px.bar(
-            avg_sleep_by_day,
-            x=avg_sleep_by_day.index,
-            y=['sleepTimeHours', 'deepSleepHours'],
-            barmode='group',
-            labels={'value': 'Hours', 'DayOfWeek': 'Day of Week', 'variable': 'Sleep Metric'},
-            title='Average Total Sleep and Deep Sleep by Day of Week'
-        )
-        st.plotly_chart(fig_avg_sleep, use_container_width=True)
-        
-        # Plot 2: Sleep Time Trend with Annotations
-        fig_sleep_trend = px.line(df_sleep, x='Date', y='sleepTimeHours', title='Sleep Time Trend Over Time')
-        
-        max_sleep_row = df_sleep.loc[df_sleep['sleepTimeHours'].idxmax()]
-        min_sleep_row = df_sleep.loc[df_sleep['sleepTimeHours'].idxmin()]
-        
-        fig_sleep_trend.add_annotation(x=max_sleep_row['Date'], y=max_sleep_row['sleepTimeHours'],
-                                        text=f"Max: {max_sleep_row['sleepTimeHours']:.1f}h", showarrow=True, arrowhead=1)
-        fig_sleep_trend.add_annotation(x=min_sleep_row['Date'], y=min_sleep_row['sleepTimeHours'],
-                                        text=f"Min: {min_sleep_row['sleepTimeHours']:.1f}h", showarrow=True, arrowhead=1)
-        st.plotly_chart(fig_sleep_trend, use_container_width=True)
-        
-        # Plot 3: Deep Sleep Percentage Trend with Annotations
-        df_sleep['deepSleepPercentage'] = (df_sleep['deepSleepHours'] / df_sleep['sleepTimeHours']) * 100
-        
-        fig_deep_sleep_trend = px.line(df_sleep, x='Date', y='deepSleepPercentage', title='Deep Sleep Percentage Trend Over Time')
-
-        max_ds_row = df_sleep.loc[df_sleep['deepSleepPercentage'].idxmax()]
-        min_ds_row = df_sleep.loc[df_sleep['deepSleepPercentage'].idxmin()]
-        
-        fig_deep_sleep_trend.add_annotation(x=max_ds_row['Date'], y=max_ds_row['deepSleepPercentage'],
-                                            text=f"Max: {max_ds_row['deepSleepPercentage']:.1f}%", showarrow=True, arrowhead=1)
-        fig_deep_sleep_trend.add_annotation(x=min_ds_row['Date'], y=min_ds_row['deepSleepPercentage'],
-                                            text=f"Min: {min_ds_row['deepSleepPercentage']:.1f}%", showarrow=True, arrowhead=1)
-        st.plotly_chart(fig_deep_sleep_trend, use_container_width=True)
-    else:
-        st.warning("Could not find complete sleep data for plotting.")
-
-    st.markdown("---")
-
     # --- K-Means Clustering Section (hidden from view) ---
     st.subheader("Background Analysis for AI Insights")
-    st.info("The application is running k-means clustering in the background to prepare data for the AI insights. This visualization is hidden as per your request.")
+    st.info("The application is running AI and Machine Learning algorithms in the background to prepare data for the AI insights.")
     
     cluster_features = [
         'restingHeartRate_x', 'totalSteps', 'totalDistanceMeters', 
@@ -240,3 +163,85 @@ if 'df' in st.session_state:
                 )
                 
             st.markdown(llm_output)
+
+    st.markdown("---")
+    # --- Data Visualization Section ---
+    st.header("Key Health & Activity Visualizations")
+    
+    col1, col2 = st.columns(2)
+    
+    rhr_col = 'restingHeartRate' if 'restingHeartRate' in df_cleaned.columns else None
+
+    with col1:
+        # Plot 1: Resting Heart Rate over time
+        if rhr_col:
+            fig_rhr = px.line(df_cleaned, x="Date", y=rhr_col, title="Resting Heart Rate Over Time")
+            fig_rhr.update_yaxes(rangemode="tozero")
+            st.plotly_chart(fig_rhr, use_container_width=True)
+        else:
+            st.warning("Could not find resting heart rate data for plotting.")
+            
+    with col2:
+        # Plot 2: Daily Steps over time
+        if 'totalSteps' in df_cleaned.columns:
+            fig_steps = px.line(df_cleaned, x="Date", y="totalSteps", title="Daily Steps Over Time")
+            fig_steps.update_yaxes(rangemode="tozero")
+            st.plotly_chart(fig_steps, use_container_width=True)
+        else:
+            st.warning("Could not find daily steps data for plotting.")
+
+    # --- Sleep Analysis Section ---
+    st.subheader("Sleep Analysis")
+    if all(col in df_cleaned.columns for col in ['sleepTimeHours', 'deepSleepHours', 'Date']):
+        df_sleep = df_cleaned.copy()
+        df_sleep['DayOfWeek'] = df_sleep['Date'].dt.day_name()
+        
+        # Calculate average sleep by day of week
+        avg_sleep_by_day = df_sleep.groupby('DayOfWeek')[['sleepTimeHours', 'deepSleepHours']].mean().reindex([
+            'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'
+        ])
+
+        # Calculate the variance score (absolute difference)
+        avg_sleep_by_day['variance_score'] = (
+            avg_sleep_by_day['sleepTimeHours'] - avg_sleep_by_day['deepSleepHours']
+        ).abs()
+        
+        # Plot 1: Avg DOW Variance between total sleep and deep sleep
+        fig_avg_sleep = px.bar(
+            avg_sleep_by_day,
+            x=avg_sleep_by_day.index,
+            y='variance_score',
+            labels={'value': 'Score', 'DayOfWeek': 'Day of Week', 'variable': 'Variance Score'},
+            title='Variance between Deep Sleep and Total Sleep (> variance = worse quality sleep)'
+        )
+        st.plotly_chart(fig_avg_sleep, use_container_width=True)
+        
+        # Plot 2: Sleep Time Trend with Annotations
+        fig_sleep_trend = px.line(df_sleep, x='Date', y='sleepTimeHours', title='Sleep Time Trend Over Time')
+        
+        max_sleep_row = df_sleep.loc[df_sleep['sleepTimeHours'].idxmax()]
+        min_sleep_row = df_sleep.loc[df_sleep['sleepTimeHours'].idxmin()]
+        
+        fig_sleep_trend.add_annotation(x=max_sleep_row['Date'], y=max_sleep_row['sleepTimeHours'],
+                                        text=f"Max: {max_sleep_row['sleepTimeHours']:.1f}h", showarrow=True, arrowhead=1)
+        fig_sleep_trend.add_annotation(x=min_sleep_row['Date'], y=min_sleep_row['sleepTimeHours'],
+                                        text=f"Min: {min_sleep_row['sleepTimeHours']:.1f}h", showarrow=True, arrowhead=1)
+        st.plotly_chart(fig_sleep_trend, use_container_width=True)
+        
+        # Plot 3: Deep Sleep Percentage Trend with Annotations
+        df_sleep['deepSleepPercentage'] = (df_sleep['deepSleepHours'] / df_sleep['sleepTimeHours']) * 100
+        
+        fig_deep_sleep_trend = px.line(df_sleep, x='Date', y='deepSleepPercentage', title='Deep Sleep Percentage Trend Over Time')
+
+        max_ds_row = df_sleep.loc[df_sleep['deepSleepPercentage'].idxmax()]
+        min_ds_row = df_sleep.loc[df_sleep['deepSleepPercentage'].idxmin()]
+        
+        fig_deep_sleep_trend.add_annotation(x=max_ds_row['Date'], y=max_ds_row['deepSleepPercentage'],
+                                            text=f"Max: {max_ds_row['deepSleepPercentage']:.1f}%", showarrow=True, arrowhead=1)
+        fig_deep_sleep_trend.add_annotation(x=min_ds_row['Date'], y=min_ds_row['deepSleepPercentage'],
+                                            text=f"Min: {min_ds_row['deepSleepPercentage']:.1f}%", showarrow=True, arrowhead=1)
+        st.plotly_chart(fig_deep_sleep_trend, use_container_width=True)
+    else:
+        st.warning("Could not find complete sleep data for plotting.")
+
+    st.markdown("---")
