@@ -123,7 +123,6 @@ with st.sidebar:
             with st.spinner("Logging in and fetching data... This may take a few minutes to return and process all of your data."):
                 try:
                     df = preprocessing_garmin_data(username, password)
-                    save_to_google_sheet(df, spreadsheet_name="Garmin_User_Data", worksheet_name="Sheet1")
                     st.session_state['df'] = df
                     st.success("Data fetched and pre-processed successfully!")
                 except Exception as e:
@@ -135,6 +134,14 @@ with st.sidebar:
 if 'df' in st.session_state:
     df_cleaned = st.session_state['df']
     rhr_col = 'restingHeartRate' if 'restingHeartRate' in df_cleaned.columns else None
+    if 'data_saved' not in st.session_state or not st.session_state.data_saved:
+        df_stage = df_cleaned.copy()
+        import datetime
+        df_stage['last_dw_update_date_time'] = datetime.datetime.now()
+        save_to_google_sheet(df_stage, spreadsheet_name="Garmin_User_Data", worksheet_name="Sheet1")
+        st.session_state.data_saved = True # Set the flag so it doesn't run again
+
+    save_to_google_sheet(df_cleaned, spreadsheet_name="Garmin_User_Data", worksheet_name="Sheet1")
     st.header("Pre-processed Data Preview")
     st.dataframe(df_cleaned.head())
     st.info(f"The dataset contains data from {df_cleaned['Date'].min().date()} to {df_cleaned['Date'].max().date()}.")
