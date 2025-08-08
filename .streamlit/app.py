@@ -18,7 +18,7 @@ import gspread
 warnings.filterwarnings("ignore", category=FutureWarning)
 
 # --- Streamlit App Setup ---
-st.set_page_config(layout="wide", page_title="Garmin Data Dashboard")
+st.set_page_config(layout="wide", page_title="Garmin Health Data Dashboard")
 st.markdown("""
 <style>
 .stDeployButton {
