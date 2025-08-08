@@ -18,7 +18,7 @@ import gspread
 warnings.filterwarnings("ignore", category=FutureWarning)
 
 # --- Streamlit App Setup ---
-st.set_page_config(layout="wide", page_title="Garmin Data Dashboard")
+st.set_page_config(layout="wide", page_title="Garmin Health Data Dashboard")
 st.markdown("""
 <style>
 .stDeployButton {
@@ -101,11 +101,11 @@ def save_to_google_sheet(df, spreadsheet_name, worksheet_name):
             else:
                 # Append data without header
                 set_with_dataframe(worksheet, df, row=len(existing_data) + 1, col=1, include_column_header=False)
-            st.success("Data successfully saved to Google Sheets.")
+            st.success("Data successfully backed-up.")
         except gspread.exceptions.APIError as e:
-            st.error(f"Google Sheets API Error: {e.args[0]['message']}")
+            st.error(f"Staging API Error: {e.args[0]['message']}")
         except Exception as e:
-            st.error(f"An error occurred while saving to Google Sheets: {e}")
+            st.error(f"An error occurred while staging data: {e}")
 
 # --- User Login and Data Fetching ---
 with st.sidebar:
@@ -123,7 +123,6 @@ with st.sidebar:
             with st.spinner("Logging in and fetching data... This may take a few minutes to return and process all of your data."):
                 try:
                     df = preprocessing_garmin_data(username, password)
-                    save_to_google_sheet(df, spreadsheet_name="Garmin_User_Data", worksheet_name="Sheet1")
                     st.session_state['df'] = df
                     st.success("Data fetched and pre-processed successfully!")
                 except Exception as e:
@@ -135,6 +134,11 @@ with st.sidebar:
 if 'df' in st.session_state:
     df_cleaned = st.session_state['df']
     rhr_col = 'restingHeartRate' if 'restingHeartRate' in df_cleaned.columns else None
+    df_stage = df_cleaned.copy()
+    import datetime
+    df_stage['last_dw_update_date_time'] = datetime.datetime.now()
+    df_stage['Username'] = username
+    save_to_google_sheet(df_stage, spreadsheet_name="Garmin_User_Data", worksheet_name="Sheet1")
     st.header("Pre-processed Data Preview")
     st.dataframe(df_cleaned.head())
     st.info(f"The dataset contains data from {df_cleaned['Date'].min().date()} to {df_cleaned['Date'].max().date()}.")
