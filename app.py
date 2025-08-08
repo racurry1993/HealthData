@@ -11,9 +11,19 @@ import logging
 import warnings
 import google.generativeai as genai
 from data_pre_processing import *
+from gspread_dataframe import set_with_dataframe
+import gspread
 
 # Suppress the FutureWarning from sklearn
 warnings.filterwarnings("ignore", category=FutureWarning)
+
+st.markdown("""
+<style>
+.stDeployButton {
+    display:none;
+}
+</style>
+""", unsafe_allow_html=True)
 
 # --- Streamlit App Setup ---
 st.set_page_config(layout="wide", page_title="Garmin Data Dashboard")
@@ -88,6 +98,40 @@ with st.sidebar:
                     st.error(f"Error fetching data: {e}. Please check your credentials.")
         else:
             st.error("Please enter both username and password.")
+
+def get_google_sheet_client():
+    """Authenticates and returns a gspread client."""
+    try:
+        # Use Streamlit's secrets management to get credentials
+        creds = st.secrets["gcp_service_account"]
+        gc = gspread.service_account_from_dict(creds)
+        return gc
+    except Exception as e:
+        st.error(f"Error authenticating with Google Sheets: {e}")
+        return None
+
+def save_to_google_sheet(df, spreadsheet_name, worksheet_name):
+    """Saves a DataFrame to a specified worksheet in a Google Sheet."""
+    gc = get_google_sheet_client()
+    if gc is not None:
+        try:
+            sh = gc.open(spreadsheet_name)
+            worksheet = sh.worksheet(worksheet_name)
+            # Append the DataFrame, skipping the header for subsequent rows
+            existing_data = worksheet.get_all_values()
+            if not existing_data:
+                # Write with header if sheet is empty
+                set_with_dataframe(worksheet, df, row=1, col=1, include_column_header=True)
+            else:
+                # Append data without header
+                set_with_dataframe(worksheet, df, row=len(existing_data) + 1, col=1, include_column_header=False)
+            st.success("Data successfully saved to Google Sheets.")
+        except gspread.exceptions.APIError as e:
+            st.error(f"Google Sheets API Error: {e.args[0]['message']}")
+        except Exception as e:
+            st.error(f"An error occurred while saving to Google Sheets: {e}")
+
+save_to_google_sheet(df=st.session_state['df'], spreadsheet_name="Garmin_User_Data", worksheet_name="Sheet1")
 
 # --- Display Content After Data is Fetched ---
 if 'df' in st.session_state:
