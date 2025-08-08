@@ -134,14 +134,11 @@ with st.sidebar:
 if 'df' in st.session_state:
     df_cleaned = st.session_state['df']
     rhr_col = 'restingHeartRate' if 'restingHeartRate' in df_cleaned.columns else None
-    if 'data_saved' not in st.session_state or not st.session_state.data_saved:
-        df_stage = df_cleaned.copy()
-        import datetime
-        df_stage['last_dw_update_date_time'] = datetime.datetime.now()
-        df_stage['Username'] = username
-        save_to_google_sheet(df_stage, spreadsheet_name="Garmin_User_Data", worksheet_name="Sheet1")
-        st.session_state.data_saved = True # Set the flag so it doesn't run again
-
+    df_stage = df_cleaned.copy()
+    import datetime
+    df_stage['last_dw_update_date_time'] = datetime.datetime.now()
+    df_stage['Username'] = username
+    save_to_google_sheet(df_stage, spreadsheet_name="Garmin_User_Data", worksheet_name="Sheet1")
     st.header("Pre-processed Data Preview")
     st.dataframe(df_cleaned.head())
     st.info(f"The dataset contains data from {df_cleaned['Date'].min().date()} to {df_cleaned['Date'].max().date()}.")
