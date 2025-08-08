@@ -142,7 +142,6 @@ if 'df' in st.session_state:
         save_to_google_sheet(df_stage, spreadsheet_name="Garmin_User_Data", worksheet_name="Sheet1")
         st.session_state.data_saved = True # Set the flag so it doesn't run again
 
-    save_to_google_sheet(df_cleaned, spreadsheet_name="Garmin_User_Data", worksheet_name="Sheet1")
     st.header("Pre-processed Data Preview")
     st.dataframe(df_cleaned.head())
     st.info(f"The dataset contains data from {df_cleaned['Date'].min().date()} to {df_cleaned['Date'].max().date()}.")
