@@ -17,6 +17,8 @@ import gspread
 # Suppress the FutureWarning from sklearn
 warnings.filterwarnings("ignore", category=FutureWarning)
 
+# --- Streamlit App Setup ---
+st.set_page_config(layout="wide", page_title="Garmin Data Dashboard")
 st.markdown("""
 <style>
 .stDeployButton {
@@ -24,9 +26,6 @@ st.markdown("""
 }
 </style>
 """, unsafe_allow_html=True)
-
-# --- Streamlit App Setup ---
-st.set_page_config(layout="wide", page_title="Garmin Data Dashboard")
 st.title("Garmin AI Generated Analysis")
 st.markdown("---")
 
@@ -75,30 +74,7 @@ def get_llm_insight_with_gemini(data_summary, cluster_summary_df, cluster_label_
         return response.text
     except Exception as e:
         return f"An error occurred while calling the Gemini API: {e}"
-
-# --- User Login and Data Fetching ---
-with st.sidebar:
-    st.header("Garmin Connect Login")
-    username = st.text_input("Username")
-    password = st.text_input("Password", type="password")
     
-    st.header("LLM Configuration")
-    gemini_api_key = 'AIzaSyAiaswXxN3ngfEwMRXckBmEoZHO151jRv0'
-    
-    st.warning("Please be aware that this application requires your Garmin Connect credentials.")
-    
-    if st.button("Fetch Data"):
-        if username and password:
-            with st.spinner("Logging in and fetching data... This may take a few minutes to return and process all of your data."):
-                try:
-                    df = preprocessing_garmin_data(username, password)
-                    st.session_state['df'] = df
-                    st.success("Data fetched and pre-processed successfully!")
-                except Exception as e:
-                    st.error(f"Error fetching data: {e}. Please check your credentials.")
-        else:
-            st.error("Please enter both username and password.")
-
 def get_google_sheet_client():
     """Authenticates and returns a gspread client."""
     try:
@@ -131,7 +107,29 @@ def save_to_google_sheet(df, spreadsheet_name, worksheet_name):
         except Exception as e:
             st.error(f"An error occurred while saving to Google Sheets: {e}")
 
-save_to_google_sheet(df=st.session_state['df'], spreadsheet_name="Garmin_User_Data", worksheet_name="Sheet1")
+# --- User Login and Data Fetching ---
+with st.sidebar:
+    st.header("Garmin Connect Login")
+    username = st.text_input("Username")
+    password = st.text_input("Password", type="password")
+    
+    st.header("LLM Configuration")
+    gemini_api_key = 'AIzaSyAiaswXxN3ngfEwMRXckBmEoZHO151jRv0'
+    
+    st.warning("Please be aware that this application requires your Garmin Connect credentials.")
+    
+    if st.button("Fetch Data"):
+        if username and password:
+            with st.spinner("Logging in and fetching data... This may take a few minutes to return and process all of your data."):
+                try:
+                    df = preprocessing_garmin_data(username, password)
+                    save_to_google_sheet(df, spreadsheet_name="Garmin_User_Data", worksheet_name="Sheet1")
+                    st.session_state['df'] = df
+                    st.success("Data fetched and pre-processed successfully!")
+                except Exception as e:
+                    st.error(f"Error fetching data: {e}. Please check your credentials.")
+        else:
+            st.error("Please enter both username and password.")
 
 # --- Display Content After Data is Fetched ---
 if 'df' in st.session_state:
