@@ -9,3 +9,4 @@ seaborn
 statsmodels
 gspread
 gspread_dataframe
+xgboost
