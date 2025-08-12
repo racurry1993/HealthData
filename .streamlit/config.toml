@@ -1,6 +1,14 @@
 [theme]
-primaryColor = "#FF4B4B"
-backgroundColor = "#F9FAFB"
-secondaryBackgroundColor = "#FFFFFF"
-textColor = "#333333"
-font = "sans serif"
+primaryColor="#FF6B35"        # Accent color (buttons, highlights)
+backgroundColor="#121212"     # Main background (dark gray)
+secondaryBackgroundColor="#1E1E1E"  # Sidebar / card background
+textColor="#EAEAEA"           # Main text color
+font="sans serif"
+
+[browser]
+gatherUsageStats = false
+
+[server]
+headless = true
+port = 8501
+enableCORS = true
