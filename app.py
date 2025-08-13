@@ -40,37 +40,32 @@ if 'user_profile' not in st.session_state:
 # ------------------------------
 # Google Sheets helpers
 # ------------------------------
-@st.cache_resource(ttl=3600)
 def get_gs_client():
     try:
         creds = st.secrets["gcp_service_account"]
         gc = gspread.service_account_from_dict(creds)
-        # Add this line to get the session object directly
-        # and ensure it's properly authorized.
-        gc.login()
         return gc
     except Exception as e:
-        st.error(f"Google Sheets auth failed: {e}")
+        st.error("Google Sheets auth failed. Add service account JSON to Streamlit secrets as 'gcp_service_account'.")
         st.stop()
 
-@st.cache_data(ttl=3600) # Cache for 1 hour
+@st.cache_data(ttl=3600)
 def ensure_sheet_and_tabs(spreadsheet_name="Garmin_User_Data"):
+    # get_gs_client() is now called inside the function, ensuring a fresh client each time.
     gc = get_gs_client()
     try:
         sh = gc.open_by_url(st.secrets.get("user_spreadsheet_url")) if st.secrets.get("user_spreadsheet_url") else gc.open(spreadsheet_name)
     except Exception:
-        # create new spreadsheet
         sh = gc.create(spreadsheet_name)
     # required worksheets and headers
     required = {
         "Users": ["email", "role", "linked_coach_email", "certified_coach", "date_joined"],
         "Goals": ["goal_id", "user_email", "goal_type", "start_value", "target_value", "target_date", "status", "created_date", "progress_pct", "forecast_value", "forecast_success"],
-        "ActivityData": ["user_email", "Date"]  # ActivityData will be appended with many columns; header minimal
+        "ActivityData": ["user_email", "Date"]
     }
     for ws_name, headers in required.items():
         try:
             ws = sh.worksheet(ws_name)
-            # Ensure header exists
             cur_header = ws.row_values(1)
             if not cur_header or len(cur_header) < len(headers):
                 try:
