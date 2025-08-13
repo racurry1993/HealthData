@@ -7,6 +7,6 @@ garminconnect
 google-generativeai
 seaborn
 statsmodels
-gspread
+gspread>=5.12.2
 gspread_dataframe
 xgboost
