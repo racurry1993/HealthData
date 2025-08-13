@@ -11,3 +11,5 @@ gspread==5.12.4
 gspread_dataframe
 xgboost
 google-auth==2.22.0
+google-auth-oauthlib==0.7.0
+google-api-python-client==2.86.0
