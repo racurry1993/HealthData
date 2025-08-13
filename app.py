@@ -40,14 +40,17 @@ if 'user_profile' not in st.session_state:
 # ------------------------------
 # Google Sheets helpers
 # ------------------------------
-@st.cache_resource(ttl=3600)  # Cache for 1 hour
+@st.cache_resource(ttl=3600)
 def get_gs_client():
     try:
         creds = st.secrets["gcp_service_account"]
         gc = gspread.service_account_from_dict(creds)
+        # Add this line to get the session object directly
+        # and ensure it's properly authorized.
+        gc.login()
         return gc
     except Exception as e:
-        st.error("Google Sheets auth failed. Add service account JSON to Streamlit secrets as 'gcp_service_account'.")
+        st.error(f"Google Sheets auth failed: {e}")
         st.stop()
 
 @st.cache_data(ttl=3600) # Cache for 1 hour
