@@ -61,7 +61,7 @@ def ensure_sheet_and_tabs(spreadsheet_name="Garmin_User_Data"):
     for ws_name, headers in required.items():
         try:
             ws = sh.worksheet(ws_name)
-            # Ensure header exists (if missing or too short replace first row)
+            # Ensure header exists
             cur_header = ws.row_values(1)
             if not cur_header or len(cur_header) < len(headers):
                 try:
@@ -78,15 +78,19 @@ def read_users(spreadsheet_name="Garmin_User_Data"):
     sh = ensure_sheet_and_tabs(spreadsheet_name)
     ws = sh.worksheet("Users")
     records = ws.get_all_records()
-    df = pd.DataFrame(records)
-    if df.empty:
-        df = pd.DataFrame(columns=["email", "role", "linked_coach_email", "certified_coach", "date_joined"])
-    return df
+    if not records:
+        return pd.DataFrame(columns=["email", "role", "linked_coach_email", "certified_coach", "date_joined"])
+    return pd.DataFrame(records)
 
 def append_user_row(email, role="user", linked_coach_email="", certified_coach=False, spreadsheet_name="Garmin_User_Data"):
+    """
+    Appends a user to the Users sheet.
+    All users will have a date_joined default of 2024-01-01 regardless of actual join date.
+    """
     sh = ensure_sheet_and_tabs(spreadsheet_name)
     ws = sh.worksheet("Users")
-    row = [email, role, linked_coach_email, str(certified_coach).upper(), datetime.date.today().isoformat()]
+    fixed_join_date = date(2024, 1, 1).isoformat()
+    row = [email, role, linked_coach_email, str(certified_coach).upper(), fixed_join_date]
     ws.append_row(row)
 
 def read_activity_for_user(user_email, spreadsheet_name="Garmin_User_Data"):
