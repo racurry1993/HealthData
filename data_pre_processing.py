@@ -65,17 +65,35 @@ def preprocessing_garmin_data(username, password, last_login_date=None):
     total_df = pd.DataFrame({"Date": date_range})  # Replace with your processed df
 
     # === Align columns with ActivityData worksheet ===
-    try:
-        import gspread
-        from oauth2client.service_account import ServiceAccountCredentials
+    import gspread
+    from google.oauth2.service_account import Credentials # This is the updated import
+    import numpy as np
+    import logging # Assuming logger is defined elsewhere, if not, define it or remove this line
 
+    logger = logging.getLogger(__name__) # Ensure logger is set up if not already
+
+    try:
+        # Define your scopes
         scope = ['https://spreadsheets.google.com/feeds',
-                 'https://www.googleapis.com/auth/drive']
-        creds = ServiceAccountCredentials.from_json_keyfile_name("config.json", scope)
+                'https://www.googleapis.com/auth/drive']
+
+        # Authenticate using Credentials.from_service_account_file
+        # This replaces ServiceAccountCredentials.from_json_keyfile_name
+        creds = Credentials.from_service_account_file("config.json", scopes=scope)
+        
+        # Authorize gspread with the new credentials
         client = gspread.authorize(creds)
 
         ws = client.open("HealthData").worksheet("ActivityData")
         activity_columns = ws.row_values(1)
+
+        # Assuming total_df is defined and populated before this block
+        # For demonstration, let's create a dummy total_df if it's not
+        # In your actual code, ensure total_df exists here.
+        try:
+            total_df # Check if total_df exists
+        except NameError:
+            total_df = pd.DataFrame() # Create a dummy one if not, for example
 
         for col in activity_columns:
             if col not in total_df.columns:
@@ -87,3 +105,4 @@ def preprocessing_garmin_data(username, password, last_login_date=None):
         logger.error(f"Error aligning columns with ActivityData worksheet: {e}")
 
     return total_df
+#df = preprocessing_garmin_data("racurry93@gmail.com", "Bravesr1")

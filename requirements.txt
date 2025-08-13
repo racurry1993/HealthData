@@ -7,9 +7,9 @@ garminconnect
 google-generativeai
 seaborn
 statsmodels
-gspread==5.12.4
-gspread_dataframe
 xgboost
+gspread==5.12.4
+gspread-dataframe
 google-auth==2.22.0
-google-auth-oauthlib==0.7.0
 google-api-python-client==2.86.0
+google-auth-oauthlib==0.7.0
