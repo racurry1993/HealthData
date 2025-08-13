@@ -33,6 +33,10 @@ from data_pre_processing import preprocessing_garmin_data  # your existing prepr
 warnings.filterwarnings("ignore")
 st.set_page_config(layout="wide", page_title="Garmin Coach Dashboard (Beta)")
 
+# Initialize session state for login status
+if 'user_profile' not in st.session_state:
+    st.session_state.user_profile = None
+
 # ------------------------------
 # Google Sheets helpers
 # ------------------------------
@@ -274,24 +278,25 @@ def generate_llm_insights(summary_dict, cluster_summary_text, goals_list, viewer
 # ------------------------------
 def login_panel():
     st.sidebar.title("Sign in / Register")
-    email = st.sidebar.text_input("Email", value="", placeholder="your@email.com")
-    role_choice = st.sidebar.selectbox("Register as (if new)", ["user", "coach"])
-    btn = st.sidebar.button("Login / Register")
+    with st.sidebar.form("login_form"):
+        email = st.text_input("Email", value="", placeholder="your@email.com")
+        role_choice = st.selectbox("Register as (if new)", ["user", "coach"])
+        btn = st.form_submit_button("Login / Register")
+
     if btn:
         if not email:
             st.sidebar.error("Please enter an email")
-            return None
+            return
         users = read_users()
         if not users.empty and (users['email'] == email).any():
             user_row = users[users['email'] == email].iloc[0].to_dict()
             st.sidebar.success(f"Welcome back: {email} ({user_row.get('role')})")
-            return user_row
+            st.session_state.user_profile = user_row
         else:
             append_user_row(email, role=role_choice)
             st.sidebar.success(f"Registered {email} as {role_choice}. Re-click login to load profile.")
-            return {"email": email, "role": role_choice, "linked_coach_email": "", "certified_coach": False}
-
-    return None
+            st.session_state.user_profile = {"email": email, "role": role_choice, "linked_coach_email": "", "certified_coach": False}
+            st.experimental_rerun()
 
 # ------------------------------
 # UI: Core pages and helpers
@@ -521,10 +526,16 @@ def show_coach_dashboard(coach_user):
 # Sidebar: Garmin Fetch & Login
 # ------------------------------
 st.sidebar.header("Garmin & Account")
-user_profile = login_panel()
+login_panel()
 
-# Garmin fetch (if logged in as user)
-if user_profile:
+# If not logged in, stop further UI
+if not st.session_state.user_profile:
+    st.title("Garmin Coach Dashboard")
+    st.markdown("Please sign in or register via the left sidebar.")
+    st.stop()
+else:
+    # Garmin fetch (if logged in as user)
+    user_profile = st.session_state.user_profile
     st.sidebar.markdown(f"Signed in as: **{user_profile['email']}** ({user_profile['role']})")
     st.sidebar.markdown("Sync your Garmin data (will write to ActivityData sheet)")
     uname = st.sidebar.text_input("Garmin Username (email)", value="")
@@ -542,43 +553,37 @@ if user_profile:
                 except Exception as e:
                     st.error(f"Error fetching Garmin data: {e}")
 
-# If not logged in, stop further UI
-if not user_profile:
-    st.title("Garmin Coach Dashboard")
-    st.markdown("Please sign in or register via the left sidebar.")
-    st.stop()
-
-# ------------------------------
-# Main Navigation
-# ------------------------------
-menu_options = ["My Dashboard", "Insights", "Activity Trends", "Sleep Analysis", "Goals", "Settings"]
-if user_profile.get('role') == 'coach':
-    menu_options.insert(1, "Coach Dashboard")
-
-choice = st.sidebar.selectbox("Go to", menu_options)
-
-# Render pages
-if choice == "My Dashboard":
-    show_overview_page(user_profile)
-elif choice == "Insights":
-    show_insights_page(user_profile)
-elif choice == "Activity Trends":
-    show_activity_trends_page(user_profile)
-elif choice == "Sleep Analysis":
-    show_sleep_analysis_page(user_profile)
-elif choice == "Goals":
-    show_goals_page(user_profile)
-elif choice == "Coach Dashboard":
+    # ------------------------------
+    # Main Navigation
+    # ------------------------------
+    menu_options = ["My Dashboard", "Insights", "Activity Trends", "Sleep Analysis", "Goals", "Settings"]
     if user_profile.get('role') == 'coach':
-        show_coach_dashboard(user_profile)
-    else:
-        st.error("Coach Dashboard accessible only to users with role='coach'")
-elif choice == "Settings":
-    st.title("Settings")
-    st.write("Account email:", user_profile['email'])
-    st.write("Role:", user_profile['role'])
-    st.write("Linked coach:", user_profile.get('linked_coach_email', 'None'))
-    st.info("To change roles or certified status edit the Users sheet directly or extend this page to support admin actions.")
+        menu_options.insert(1, "Coach Dashboard")
+
+    choice = st.sidebar.selectbox("Go to", menu_options)
+
+    # Render pages
+    if choice == "My Dashboard":
+        show_overview_page(user_profile)
+    elif choice == "Insights":
+        show_insights_page(user_profile)
+    elif choice == "Activity Trends":
+        show_activity_trends_page(user_profile)
+    elif choice == "Sleep Analysis":
+        show_sleep_analysis_page(user_profile)
+    elif choice == "Goals":
+        show_goals_page(user_profile)
+    elif choice == "Coach Dashboard":
+        if user_profile.get('role') == 'coach':
+            show_coach_dashboard(user_profile)
+        else:
+            st.error("Coach Dashboard accessible only to users with role='coach'")
+    elif choice == "Settings":
+        st.title("Settings")
+        st.write("Account email:", user_profile['email'])
+        st.write("Role:", user_profile['role'])
+        st.write("Linked coach:", user_profile.get('linked_coach_email', 'None'))
+        st.info("To change roles or certified status edit the Users sheet directly or extend this page to support admin actions.")
 
 # ------------------------------
 # Background: update forecasts for goals if ActivityData exists
