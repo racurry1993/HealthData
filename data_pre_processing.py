@@ -1,108 +1,119 @@
-def preprocessing_garmin_data(username, password, last_login_date=None):
+def preprocessing_garmin_data(username, password, start_date, end_date, headers):
     from garminconnect import Garmin
-    import datetime
-    from datetime import date, timedelta
     import pandas as pd
-    import logging
-    import seaborn as sns
     import numpy as np
+    import datetime
+    import logging
+    from datetime import date, timedelta
 
     # Logging setup
     now = datetime.datetime.now()
-    timestamp_str = now.strftime("%Y-%m-%d_%H-%M-%S")
-    log_filename = f"garmin_data_script_{timestamp_str}.log"
-
+    log_filename = f"garmin_data_script_{now.strftime('%Y-%m-%d_%H-%M-%S')}.log"
     logging.basicConfig(
         level=logging.INFO,
-        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-        handlers=[logging.FileHandler(log_filename), logging.StreamHandler()]
+        format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+        handlers=[logging.FileHandler(log_filename), logging.StreamHandler()],
     )
     logger = logging.getLogger(__name__)
 
-    # Login to Garmin
+    # Garmin login
     try:
         api = Garmin(username, password)
         logger.info("Attempting to log in to Garmin Connect...")
         api.login()
         logger.info("Login successful.")
     except Exception as e:
-        logger.critical(f"A critical error occurred during script execution: {e}", exc_info=True)
-        return pd.DataFrame()
+        logger.critical(f"Login failed: {e}", exc_info=True)
+        raise
 
-    # Determine date range
-    today = date.today()
-    if last_login_date:
-        start_date_obj = pd.to_datetime(last_login_date).date() + timedelta(days=1)
-    else:
-        start_date_obj = date(2024, 1, 1)  # First-time user case
-
-    st_dt = start_date_obj.isoformat()
-    end_dt = today.isoformat()
-
-    logger.info(f"Fetching data from {st_dt} to {end_dt}")
-
-    def get_iso_date_range(start_date_str, end_date_str):
-        start_date = date.fromisoformat(start_date_str)
-        end_date = date.fromisoformat(end_date_str)
+    # Date range
+    def get_iso_date_range(start_date, end_date):
+        start_date = date.fromisoformat(str(start_date))
+        end_date = date.fromisoformat(str(end_date))
         if start_date > end_date:
-            return []
-        return [(start_date + timedelta(days=i)).isoformat()
-                for i in range((end_date - start_date).days + 1)]
+            raise ValueError("Start date cannot be after end date.")
+        date_list = []
+        current_date = start_date
+        while current_date <= end_date:
+            date_list.append(current_date.isoformat())
+            current_date += timedelta(days=1)
+        return date_list
 
-    date_range = get_iso_date_range(st_dt, end_dt)
+    date_range = get_iso_date_range(start_date, end_date)
 
-    if not date_range:
-        logger.info("No new dates to process.")
-        return pd.DataFrame()
+    # Initialize storage
+    total_sleep_df = pd.DataFrame()
+    total_bb_df = pd.DataFrame()
+    total_rhr_df = pd.DataFrame()
+    total_steps_df = pd.DataFrame()
+    total_user_df = pd.DataFrame()
+    total_activity_df = pd.DataFrame()
 
-    # === Existing data pull & cleaning logic ===
-    # Keeping your full original cleaning code here, no changes except using the computed date_range
-    # -----------------------------
-    # (Paste your existing processing code here unchanged except for start/end dates)
-    # -----------------------------
-
-    # For demonstration, let's pretend total_df is your final combined dataframe
-    total_df = pd.DataFrame({"Date": date_range})  # Replace with your processed df
-
-    # === Align columns with ActivityData worksheet ===
-    import gspread
-    from google.oauth2.service_account import Credentials # This is the updated import
-    import numpy as np
-    import logging # Assuming logger is defined elsewhere, if not, define it or remove this line
-
-    logger = logging.getLogger(__name__) # Ensure logger is set up if not already
-
-    try:
-        # Define your scopes
-        scope = ['https://spreadsheets.google.com/feeds',
-                'https://www.googleapis.com/auth/drive']
-
-        # Authenticate using Credentials.from_service_account_file
-        # This replaces ServiceAccountCredentials.from_json_keyfile_name
-        creds = Credentials.from_service_account_file("config.json", scopes=scope)
-        
-        # Authorize gspread with the new credentials
-        client = gspread.authorize(creds)
-
-        ws = client.open("HealthData").worksheet("ActivityData")
-        activity_columns = ws.row_values(1)
-
-        # Assuming total_df is defined and populated before this block
-        # For demonstration, let's create a dummy total_df if it's not
-        # In your actual code, ensure total_df exists here.
+    # Sleep Data
+    for dt in date_range:
         try:
-            total_df # Check if total_df exists
-        except NameError:
-            total_df = pd.DataFrame() # Create a dummy one if not, for example
+            sleep_data = api.get_sleep_data(dt)
+            sleep_df = pd.json_normalize(sleep_data)
+            sleep_df["Date"] = dt
+            total_sleep_df = pd.concat([total_sleep_df, sleep_df], ignore_index=True)
+        except Exception as e:
+            logger.warning(f"No sleep data for {dt}: {e}")
 
-        for col in activity_columns:
-            if col not in total_df.columns:
-                total_df[col] = np.nan
+    # Body Battery, RHR, Steps, User Summary
+    for dt in date_range:
+        try:
+            bb_df = pd.DataFrame(api.get_body_battery(dt))
+            if not bb_df.empty:
+                bb_df.rename(columns={"date": "Date"}, inplace=True)
+                total_bb_df = pd.concat([total_bb_df, bb_df], ignore_index=True)
+        except:
+            pass
+        try:
+            rhr_df = pd.DataFrame(api.get_rhr_day(dt))
+            if not rhr_df.empty:
+                rhr_df.rename(columns={"statisticsStartDate": "Date"}, inplace=True)
+                total_rhr_df = pd.concat([total_rhr_df, rhr_df], ignore_index=True)
+        except:
+            pass
+        try:
+            steps_df = pd.DataFrame(api.get_steps_data(dt))
+            if not steps_df.empty:
+                steps_df["Date"] = pd.to_datetime(steps_df["startGMT"]).dt.strftime("%Y-%m-%d")
+                steps_df = steps_df.groupby("Date")[["steps"]].sum().reset_index()
+                total_steps_df = pd.concat([total_steps_df, steps_df], ignore_index=True)
+        except:
+            pass
+        try:
+            user_df = pd.DataFrame(api.get_user_summary(dt))
+            if not user_df.empty:
+                user_df["Date"] = dt
+                total_user_df = pd.concat([total_user_df, user_df], ignore_index=True)
+        except:
+            pass
 
-        total_df = total_df[activity_columns]
-
+    # Activities
+    try:
+        activities = api.get_activities_by_date(start_date.isoformat(), end_date.isoformat())
+        activity_df = pd.DataFrame(activities)
+        if not activity_df.empty:
+            activity_df["Date"] = pd.to_datetime(activity_df["startTimeLocal"]).dt.strftime("%Y-%m-%d")
+            total_activity_df = pd.concat([total_activity_df, activity_df], ignore_index=True)
     except Exception as e:
-        logger.error(f"Error aligning columns with ActivityData worksheet: {e}")
+        logger.error(f"Error fetching activities: {e}")
 
-    return total_df
-#df = preprocessing_garmin_data("racurry93@gmail.com", "Bravesr1")
+    # Merge datasets
+    df_final = pd.DataFrame({"Date": date_range})
+    for df in [total_activity_df, total_sleep_df, total_bb_df, total_rhr_df, total_steps_df, total_user_df]:
+        if not df.empty:
+            df_final = df_final.merge(df, on="Date", how="left")
+
+    # Add username column
+    df_final["username"] = username
+
+    # Align columns to match Google Sheets headers
+    for col in headers:
+        if col not in df_final.columns:
+            df_final[col] = np.nan
+    df_final = df_final[headers]
+
+    return df_final
