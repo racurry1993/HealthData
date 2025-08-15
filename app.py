@@ -580,7 +580,12 @@ def show_coach_dashboard(coach_user):
 # Sidebar: Garmin Fetch & Login
 # ==========================================================
 st.sidebar.header("Garmin & Account")
-user_profile = login_panel()
+
+# Persist login state
+if 'user_profile' not in st.session_state:
+    st.session_state['user_profile'] = login_panel()
+
+user_profile = st.session_state['user_profile']
 
 def _compute_fetch_start_date_for_user(user_email: str) -> date:
     """
