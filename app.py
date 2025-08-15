@@ -604,31 +604,30 @@ def _compute_fetch_start_date_for_user(user_email: str) -> date:
 if user_profile:
     st.sidebar.markdown(f"Signed in as: **{user_profile['email']}** ({user_profile['role']})")
     st.sidebar.markdown("Sync your Garmin data (writes to ActivityData sheet)")
-
     # Initialize session state
     if 'garmin_uname' not in st.session_state:
         st.session_state['garmin_uname'] = ''
     if 'garmin_pwd' not in st.session_state:
-        st.session_state['garmin_pwd'] = None  # None to detect first entry
-
+        st.session_state['garmin_pwd'] = ''
+    
     # Username input
-    uname = st.sidebar.text_input(
+    st.session_state['garmin_uname'] = st.sidebar.text_input(
         "Garmin Username (email)", 
         value=st.session_state['garmin_uname']
     )
-    st.session_state['garmin_uname'] = uname
-
-    # Password input — do NOT use value= for type="password"
-    pwd = st.sidebar.text_input(
+    
+    # Password input — do NOT use value= to avoid clearing on focus
+    pwd_input = st.sidebar.text_input(
         "Garmin Password", 
         type="password"
     )
-    if pwd:  # only update session_state if user typed something
-        st.session_state['garmin_pwd'] = pwd
-
+    if pwd_input:  # only update session_state if user typed something
+        st.session_state['garmin_pwd'] = pwd_input
+    
     # Use stored credentials
     uname = st.session_state['garmin_uname']
     pwd = st.session_state['garmin_pwd']
+
 
     # Show computed fetch range for transparency
     intended_start_date = _compute_fetch_start_date_for_user(user_profile['email'])
