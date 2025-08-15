@@ -653,6 +653,8 @@ if user_profile:
                             # attach user email and write to ActivityData
                             append_activity_data(df, user_profile['email'])
                             st.success(f"Fetched {df.shape[0]} rows and appended to ActivityData.")
+                    except Exception as e:
+                        st.error(f"Error fetching Garmin data: {e}")
 
 # If not logged in, stop further UI
 if not user_profile:
