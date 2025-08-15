@@ -604,17 +604,30 @@ if user_profile:
     st.sidebar.markdown("Sync your Garmin data (writes to ActivityData sheet)")
     #uname = st.sidebar.text_input("Garmin Username (email)", value="")
     #pwd = st.sidebar.text_input("Garmin Password", type="password")
-    if 'garmin_uname' not in st.session_state:
-        st.session_state['garmin_uname'] = ''
-    if 'garmin_pwd' not in st.session_state:
-        st.session_state['garmin_pwd'] = ''
-    
-    uname = st.sidebar.text_input("Garmin Username (email)", value=st.session_state['garmin_uname'])
-    pwd = st.sidebar.text_input("Garmin Password", type="password", value=st.session_state['garmin_pwd'])
-    
-    # Store values back to session_state
-    st.session_state['garmin_uname'] = uname
+# Initialize session state
+if 'garmin_uname' not in st.session_state:
+    st.session_state['garmin_uname'] = ''
+if 'garmin_pwd' not in st.session_state:
+    st.session_state['garmin_pwd'] = None  # None to detect first entry
+
+# Username input
+uname = st.sidebar.text_input(
+    "Garmin Username (email)", 
+    value=st.session_state['garmin_uname']
+)
+st.session_state['garmin_uname'] = uname
+
+# Password input — do NOT use value= for type="password"
+pwd = st.sidebar.text_input(
+    "Garmin Password", 
+    type="password"
+)
+if pwd:  # only update session_state if user typed something
     st.session_state['garmin_pwd'] = pwd
+
+# Use stored credentials
+uname = st.session_state['garmin_uname']
+pwd = st.session_state['garmin_pwd']
 
 
     # Show computed fetch range for transparency
