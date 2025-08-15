@@ -598,37 +598,37 @@ def _compute_fetch_start_date_for_user(user_email: str) -> date:
     except Exception:
         return pd.to_datetime("2024-01-01").date()
 
-# Garmin fetch (if logged in as user)
+# ============================
+# Garmin fetch (if logged in)
+# ============================
 if user_profile:
     st.sidebar.markdown(f"Signed in as: **{user_profile['email']}** ({user_profile['role']})")
     st.sidebar.markdown("Sync your Garmin data (writes to ActivityData sheet)")
-    #uname = st.sidebar.text_input("Garmin Username (email)", value="")
-    #pwd = st.sidebar.text_input("Garmin Password", type="password")
-# Initialize session state
-if 'garmin_uname' not in st.session_state:
-    st.session_state['garmin_uname'] = ''
-if 'garmin_pwd' not in st.session_state:
-    st.session_state['garmin_pwd'] = None  # None to detect first entry
 
-# Username input
-uname = st.sidebar.text_input(
-    "Garmin Username (email)", 
-    value=st.session_state['garmin_uname']
-)
-st.session_state['garmin_uname'] = uname
+    # Initialize session state
+    if 'garmin_uname' not in st.session_state:
+        st.session_state['garmin_uname'] = ''
+    if 'garmin_pwd' not in st.session_state:
+        st.session_state['garmin_pwd'] = None  # None to detect first entry
 
-# Password input — do NOT use value= for type="password"
-pwd = st.sidebar.text_input(
-    "Garmin Password", 
-    type="password"
-)
-if pwd:  # only update session_state if user typed something
-    st.session_state['garmin_pwd'] = pwd
+    # Username input
+    uname = st.sidebar.text_input(
+        "Garmin Username (email)", 
+        value=st.session_state['garmin_uname']
+    )
+    st.session_state['garmin_uname'] = uname
 
-# Use stored credentials
-uname = st.session_state['garmin_uname']
-pwd = st.session_state['garmin_pwd']
+    # Password input — do NOT use value= for type="password"
+    pwd = st.sidebar.text_input(
+        "Garmin Password", 
+        type="password"
+    )
+    if pwd:  # only update session_state if user typed something
+        st.session_state['garmin_pwd'] = pwd
 
+    # Use stored credentials
+    uname = st.session_state['garmin_uname']
+    pwd = st.session_state['garmin_pwd']
 
     # Show computed fetch range for transparency
     intended_start_date = _compute_fetch_start_date_for_user(user_profile['email'])
@@ -653,8 +653,6 @@ pwd = st.session_state['garmin_pwd']
                             # attach user email and write to ActivityData
                             append_activity_data(df, user_profile['email'])
                             st.success(f"Fetched {df.shape[0]} rows and appended to ActivityData.")
-                    except Exception as e:
-                        st.error(f"Error fetching Garmin data: {e}")
 
 # If not logged in, stop further UI
 if not user_profile:
