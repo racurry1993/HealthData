@@ -115,6 +115,7 @@ def preprocessing_garmin_data(username, password, start_date, end_date, headers)
         if col not in df_final.columns:
             df_final[col] = np.nan
     df_final = df_final[headers]
+    df_final = df_final.drop_duplicates(subset='Date')
 
     logger.info(f"Preprocessing complete. Final dataset shape: {df_final.shape}")
     return df_final
