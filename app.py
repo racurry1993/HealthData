@@ -581,12 +581,19 @@ def show_coach_dashboard(coach_user):
 # ==========================================================
 st.sidebar.header("Garmin & Account")
 
-# Persist login state
+# Initialize session state for user profile and Garmin credentials
 if 'user_profile' not in st.session_state:
+    st.session_state['user_profile'] = None
+if 'garmin_uname' not in st.session_state:
+    st.session_state['garmin_uname'] = ''
+if 'garmin_pwd' not in st.session_state:
+    st.session_state['garmin_pwd'] = ''
+
+# --- Login Panel ---
+if not st.session_state['user_profile']:
     st.session_state['user_profile'] = login_panel()
 
 user_profile = st.session_state['user_profile']
-
 def _compute_fetch_start_date_for_user(user_email: str) -> date:
     """
     If user has ActivityData rows:
