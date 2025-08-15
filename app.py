@@ -32,6 +32,37 @@ from data_pre_processing import preprocessing_garmin_data  # updated: now accept
 warnings.filterwarnings("ignore")
 st.set_page_config(layout="wide", page_title="Garmin Coach Dashboard (Beta)")
 
+GARMIN_HEADERS = [
+        "Date","distance","duration","elapsedDuration","movingDuration","elevationGain","elevationLoss",
+        "averageSpeed","maxSpeed","calories","bmrCalories","averageHR","maxHR","maxRunningCadenceInStepsPerMinute",
+        "ActivitySteps","aerobicTrainingEffect","anaerobicTrainingEffect","vO2MaxValue","maxDoubleCadence",
+        "locationName","lapCount","waterEstimated","trainingEffectLabel","activityTrainingLoad",
+        "minActivityLapDuration","aerobicTrainingEffectMessage","anaerobicTrainingEffectMessage",
+        "moderateIntensityMinutes_x","vigorousIntensityMinutes_x","hrTimeInZone_1","hrTimeInZone_2","hrTimeInZone_3",
+        "hrTimeInZone_4","hrTimeInZone_5","totalSets","activeSets","totalReps","typeKey_clean","awakeSleepSeconds",
+        "awakeCount","ageGroup","sleepScoreInsight","sleepTimeSeconds","sleepScoreFeedback","avgSleepStress",
+        "deepSleepSeconds","remSleepSeconds","averageRespirationValue","lightSleepSeconds","charged","drained",
+        "steps_y","pushes","totalKilocalories","activeKilocalories","bmrKilocalories","wellnessKilocalories",
+        "remainingKilocalories","totalSteps","netCalorieGoal","totalDistanceMeters","wellnessDistanceMeters",
+        "wellnessActiveKilocalories","netRemainingKilocalories","dailyStepGoal","highlyActiveSeconds",
+        "activeSeconds","sedentarySeconds","sleepingSeconds","includesWellnessData","includesActivityData",
+        "includesCalorieConsumedData","moderateIntensityMinutes_y","vigorousIntensityMinutes_y",
+        "floorsAscendedInMeters","floorsDescendedInMeters","floorsAscended","floorsDescended","intensityMinutesGoal",
+        "userFloorsAscendedGoal","minHeartRate","maxHeartRate","restingHeartRate","lastSevenDaysAvgRestingHeartRate",
+        "averageStressLevel","maxStressLevel","stressDuration","restStressDuration","activityStressDuration",
+        "uncategorizedStressDuration","totalStressDuration","lowStressDuration","mediumStressDuration","highStressDuration",
+        "stressPercentage","restStressPercentage","activityStressPercentage","uncategorizedStressPercentage",
+        "lowStressPercentage","mediumStressPercentage","highStressPercentage","stressQualifier",
+        "measurableAwakeDuration","measurableAsleepDuration","minAvgHeartRate","maxAvgHeartRate",
+        "bodyBatteryChargedValue","bodyBatteryDrainedValue","bodyBatteryHighestValue","bodyBatteryLowestValue",
+        "bodyBatteryMostRecentValue","bodyBatteryDuringSleep","averageMonitoringEnvironmentAltitude",
+        "restingCaloriesFromActivity","avgWakingRespirationValue","highestRespirationValue","lowestRespirationValue",
+        "ActivityStartHour","ActivityPerformedToday","activityType","workout_date","last_workout_date",
+        "daysSinceLastWorkout","sleepTimeHours","deepSleepHours","remSleepHours","lightSleepHours",
+        "awakeSleepHours","deepSleepPercentage","remSleepPercentage","lightSleepPercentage","awakeSleepPercentage",
+        "day_of_week","is_weekend","month","day_of_year","user_email"
+    ]
+
 # ==========================================================
 # Google Sheets helpers (with caching to reduce API calls)
 # ==========================================================
@@ -657,7 +688,8 @@ if user_profile:
                 with st.spinner("Fetching and preprocessing Garmin data (this can take a minute)..."):
                     try:
                         # Pass start_date to preprocessing; it returns a prepped DataFrame only
-                        df = preprocessing_garmin_data(uname, pwd, start_date=intended_start_date)
+                        df = preprocessing_garmin_data(uname, pwd, start_date=intended_start_date, end_date=date.today(),
+                                                      headers=GARMIN_HEADERS)
                         if df is None or df.empty:
                             st.warning("No new Garmin data returned for the requested window.")
                         else:
