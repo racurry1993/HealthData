@@ -1,4 +1,3 @@
-# app.py
 """
 Garmin Coach Dashboard - Streamlit app
 
@@ -8,6 +7,7 @@ streamlit pandas numpy plotly gspread gspread_dataframe scikit-learn xgboost goo
 Secrets expected in Streamlit secrets:
 - gcp_service_account: (service account JSON dict)
 - gemini_api_key: "<YOUR_GEMINI_API_KEY>"
+- user_spreadsheet_url: "https://docs.google.com/..." (optional; otherwise a new sheet named Garmin_User_Data will be created)
 
 Be careful: do NOT store any user passwords in plaintext permanently.
 This app uses Google Sheets for light persistence (Users, Goals, ActivityData).
@@ -24,48 +24,60 @@ import gspread
 from gspread_dataframe import set_with_dataframe
 import xgboost as xgb
 from sklearn.linear_model import LinearRegression
-from sklearn.preprocessing import StandardScaler
 import uuid
 import math
 import warnings
-from data_pre_processing import preprocessing_garmin_data  # your existing preprocessing function
+from data_pre_processing import preprocessing_garmin_data  # updated: now accepts start_date and returns DataFrame only
 
 warnings.filterwarnings("ignore")
 st.set_page_config(layout="wide", page_title="Garmin Coach Dashboard (Beta)")
 
-# Initialize session state for login status
-if 'user_profile' not in st.session_state:
-    st.session_state.user_profile = None
+# ==========================================================
+# Google Sheets helpers (with caching to reduce API calls)
+# ==========================================================
 
-# ------------------------------
-# Google Sheets helpers
-# ------------------------------
+# Cache the Google Sheets client — resource-level (long-lived)
+@st.cache_resource(show_spinner=False)
 def get_gs_client():
+    # Helpful auth validations
+    required_key = "gcp_service_account"
+    if required_key not in st.secrets:
+        raise RuntimeError(
+            "Missing Streamlit secret 'gcp_service_account'. "
+            "Add your Google Service Account JSON (as a dict) under that key."
+        )
     try:
         creds = st.secrets["gcp_service_account"]
         gc = gspread.service_account_from_dict(creds)
         return gc
     except Exception as e:
-        st.error("Google Sheets auth failed. Add service account JSON to Streamlit secrets as 'gcp_service_account'.")
-        st.stop()
+        raise RuntimeError(
+            "Google Sheets auth failed. Check your 'gcp_service_account' secret "
+            "(service account JSON) and that the target Sheets are shared with "
+            "the service account email."
+        ) from e
 
-@st.cache_data(ttl=3600)
 def ensure_sheet_and_tabs(spreadsheet_name="Garmin_User_Data"):
-    # get_gs_client() is now called inside the function, ensuring a fresh client each time.
+    """
+    Create or open the spreadsheet and ensure all required tabs exist with headers.
+    Not cached because it returns handles; we only call it on writes or explicit needs.
+    """
     gc = get_gs_client()
     try:
         sh = gc.open_by_url(st.secrets.get("user_spreadsheet_url")) if st.secrets.get("user_spreadsheet_url") else gc.open(spreadsheet_name)
     except Exception:
+        # create new spreadsheet
         sh = gc.create(spreadsheet_name)
     # required worksheets and headers
     required = {
         "Users": ["email", "role", "linked_coach_email", "certified_coach", "date_joined"],
         "Goals": ["goal_id", "user_email", "goal_type", "start_value", "target_value", "target_date", "status", "created_date", "progress_pct", "forecast_value", "forecast_success"],
-        "ActivityData": ["user_email", "Date"]
+        "ActivityData": ["user_email", "Date"]  # ActivityData will be appended with many columns; header minimal
     }
     for ws_name, headers in required.items():
         try:
             ws = sh.worksheet(ws_name)
+            # Ensure header exists (if missing or too short replace first row)
             cur_header = ws.row_values(1)
             if not cur_header or len(cur_header) < len(headers):
                 try:
@@ -74,48 +86,82 @@ def ensure_sheet_and_tabs(spreadsheet_name="Garmin_User_Data"):
                     pass
                 ws.insert_row(headers, index=1)
         except gspread.exceptions.WorksheetNotFound:
-            ws = sh.add_worksheet(title=ws_name, rows=2000, cols=40)
+            ws = sh.add_worksheet(title=ws_name, rows=2000, cols=60)
             ws.insert_row(headers, index=1)
     return sh
 
-@st.cache_data(ttl=3600)
-def read_users(spreadsheet_name="Garmin_User_Data"):
+# ------------------------------
+# Cached reads (invalidate after writes)
+# ------------------------------
+@st.cache_data(ttl=300, show_spinner=False)
+def _read_users_df(spreadsheet_name="Garmin_User_Data"):
     sh = ensure_sheet_and_tabs(spreadsheet_name)
     ws = sh.worksheet("Users")
     records = ws.get_all_records()
+    df = pd.DataFrame(records)
+    if df.empty:
+        df = pd.DataFrame(columns=["email", "role", "linked_coach_email", "certified_coach", "date_joined"])
+    return df
+
+@st.cache_data(ttl=300, show_spinner=False)
+def _read_goals_df(spreadsheet_name="Garmin_User_Data"):
+    sh = ensure_sheet_and_tabs(spreadsheet_name)
+    ws = sh.worksheet("Goals")
+    records = ws.get_all_records()
     if not records:
-        return pd.DataFrame(columns=["email", "role", "linked_coach_email", "certified_coach", "date_joined"])
+        return pd.DataFrame(columns=["goal_id", "user_email", "goal_type", "start_value", "target_value", "target_date", "status", "created_date", "progress_pct", "forecast_value", "forecast_success"])
     return pd.DataFrame(records)
 
-def append_user_row(email, role="user", linked_coach_email="", certified_coach=False, spreadsheet_name="Garmin_User_Data"):
-    """
-    Appends a user to the Users sheet.
-    All users will have a date_joined default of 2024-01-01 regardless of actual join date.
-    """
-    sh = ensure_sheet_and_tabs(spreadsheet_name)
-    ws = sh.worksheet("Users")
-    fixed_join_date = date(2024, 1, 1).isoformat()
-    row = [email, role, linked_coach_email, str(certified_coach).upper(), fixed_join_date]
-    ws.append_row(row)
-    # Clear cache to force a refresh
-    read_users.clear()
-
-@st.cache_data(ttl=3600)
-def read_activity_for_user(user_email, spreadsheet_name="Garmin_User_Data"):
+@st.cache_data(ttl=300, show_spinner=False)
+def _read_activity_df(spreadsheet_name="Garmin_User_Data"):
     sh = ensure_sheet_and_tabs(spreadsheet_name)
     ws = sh.worksheet("ActivityData")
     records = ws.get_all_records()
     if not records:
-        return pd.DataFrame()
+        return pd.DataFrame(columns=["user_email", "Date"])
     df = pd.DataFrame(records)
-    if 'user_email' not in df.columns:
+    if "Date" in df.columns:
+        df["Date"] = pd.to_datetime(df["Date"], errors="coerce")
+    return df
+
+def invalidate_all_cached_reads():
+    # Clears all cached read_* dataframes so subsequent calls reread from Sheets after a write
+    try:
+        _read_users_df.clear()
+        _read_goals_df.clear()
+        _read_activity_df.clear()
+    except Exception:
+        # Fallback: nuke all cache_data
+        st.cache_data.clear()
+
+# ------------------------------
+# Thin wrappers (preserve existing function names)
+# ------------------------------
+def read_users(spreadsheet_name="Garmin_User_Data"):
+    return _read_users_df(spreadsheet_name)
+
+def read_goals(spreadsheet_name="Garmin_User_Data"):
+    return _read_goals_df(spreadsheet_name)
+
+def read_activity_for_user(user_email, spreadsheet_name="Garmin_User_Data"):
+    df = _read_activity_df(spreadsheet_name)
+    if df.empty or "user_email" not in df.columns:
         return pd.DataFrame()
-    df_user = df[df['user_email'] == user_email].copy()
-    if 'Date' in df_user.columns:
-        df_user['Date'] = pd.to_datetime(df_user['Date'])
+    df_user = df[df["user_email"] == user_email].copy()
+    if "Date" in df_user.columns:
+        df_user["Date"] = pd.to_datetime(df_user["Date"], errors="coerce")
     return df_user
 
+def append_user_row(email, role="user", linked_coach_email="", certified_coach=False, spreadsheet_name="Garmin_User_Data"):
+    sh = ensure_sheet_and_tabs(spreadsheet_name)
+    ws = sh.worksheet("Users")
+    row = [email, role, linked_coach_email, str(certified_coach).upper(), datetime.date.today().isoformat()]
+    ws.append_row(row)
+    invalidate_all_cached_reads()
+
 def append_activity_data(df_activity: pd.DataFrame, user_email, spreadsheet_name="Garmin_User_Data"):
+    if df_activity is None or df_activity.empty:
+        return
     sh = ensure_sheet_and_tabs(spreadsheet_name)
     ws = sh.worksheet("ActivityData")
     df = df_activity.copy()
@@ -125,17 +171,7 @@ def append_activity_data(df_activity: pd.DataFrame, user_email, spreadsheet_name
         set_with_dataframe(ws, df, row=1, include_column_header=True)
     else:
         set_with_dataframe(ws, df, row=len(existing) + 1, include_column_header=False)
-    # Clear cache for this specific user
-    read_activity_for_user.clear()
-
-@st.cache_data(ttl=3600)
-def read_goals(spreadsheet_name="Garmin_User_Data"):
-    sh = ensure_sheet_and_tabs(spreadsheet_name)
-    ws = sh.worksheet("Goals")
-    records = ws.get_all_records()
-    if not records:
-        return pd.DataFrame(columns=["goal_id", "user_email", "goal_type", "start_value", "target_value", "target_date", "status", "created_date", "progress_pct", "forecast_value", "forecast_success"])
-    return pd.DataFrame(records)
+    invalidate_all_cached_reads()
 
 def append_goal_row(goal_row: dict, spreadsheet_name="Garmin_User_Data"):
     sh = ensure_sheet_and_tabs(spreadsheet_name)
@@ -143,9 +179,8 @@ def append_goal_row(goal_row: dict, spreadsheet_name="Garmin_User_Data"):
     headers = ws.row_values(1)
     row = [goal_row.get(h, "") for h in headers]
     ws.append_row(row)
-    # Clear cache to force a refresh
-    read_goals.clear()
-    
+    invalidate_all_cached_reads()
+
 def update_goal_row(goal_id, updates: dict, spreadsheet_name="Garmin_User_Data"):
     sh = ensure_sheet_and_tabs(spreadsheet_name)
     ws = sh.worksheet("Goals")
@@ -161,13 +196,12 @@ def update_goal_row(goal_id, updates: dict, spreadsheet_name="Garmin_User_Data")
         if k in headers:
             col_idx = headers.index(k) + 1
             ws.update_cell(rindex, col_idx, str(v))
-    # Clear cache to force a refresh
-    read_goals.clear()
+    invalidate_all_cached_reads()
     return True
 
-# ------------------------------
-# Forecasting utilities
-# ------------------------------
+# ==========================================================
+# Forecasting utilities (unchanged)
+# ==========================================================
 def prepare_feature_df_for_metric(df_activity, metric_col, n_lags=7):
     if df_activity.empty or metric_col not in df_activity.columns:
         return pd.DataFrame()
@@ -221,9 +255,9 @@ def forecast_metric_on_date(df_activity, metric_col, target_date):
         pred = float(last_row[metric_col])
     return float(pred), model
 
-# ------------------------------
+# ==========================================================
 # Utility: map goal type to column name from preprocessed data
-# ------------------------------
+# ==========================================================
 def map_goal_type_to_column(goal_type_str):
     # normalize
     s = str(goal_type_str).strip().lower()
@@ -245,9 +279,9 @@ def map_goal_type_to_column(goal_type_str):
     }
     return mapping.get(s, None)
 
-# ------------------------------
+# ==========================================================
 # LLM wrapper (kept as separate function to edit prompt)
-# ------------------------------
+# ==========================================================
 def generate_llm_insights(summary_dict, cluster_summary_text, goals_list, viewer_role="user"):
     """
     Keep this prompt function editable. It expects:
@@ -284,85 +318,92 @@ def generate_llm_insights(summary_dict, cluster_summary_text, goals_list, viewer
     except Exception as e:
         return f"LLM call failed or not configured: {e}"
 
-# ------------------------------
+# ==========================================================
 # UI: Login / Registration
-# ------------------------------
+# ==========================================================
 def login_panel():
     st.sidebar.title("Sign in / Register")
-    with st.sidebar.form("login_form"):
-        email = st.text_input("Email", value="", placeholder="your@email.com")
-        role_choice = st.selectbox("Register as (if new)", ["user", "coach"])
-        btn = st.form_submit_button("Login / Register")
-
+    email = st.sidebar.text_input("Email", value="", placeholder="your@email.com")
+    role_choice = st.sidebar.selectbox("Register as (if new)", ["user", "coach"])
+    btn = st.sidebar.button("Login / Register")
     if btn:
         if not email:
             st.sidebar.error("Please enter an email")
-            return
+            return None
         users = read_users()
         if not users.empty and (users['email'] == email).any():
             user_row = users[users['email'] == email].iloc[0].to_dict()
             st.sidebar.success(f"Welcome back: {email} ({user_row.get('role')})")
-            st.session_state.user_profile = user_row
+            return user_row
         else:
             append_user_row(email, role=role_choice)
             st.sidebar.success(f"Registered {email} as {role_choice}. Re-click login to load profile.")
-            st.session_state.user_profile = {"email": email, "role": role_choice, "linked_coach_email": "", "certified_coach": False}
-            st.experimental_rerun()
+            return {"email": email, "role": role_choice, "linked_coach_email": "", "certified_coach": False}
+    return None
 
-# ------------------------------
+# ==========================================================
 # UI: Core pages and helpers
-# ------------------------------
-def show_overview_page(user, df_activity):
+# ==========================================================
+def show_overview_page(user):
     st.title("My Dashboard")
     st.subheader("Overview")
-    if df_activity.empty:
+    df = read_activity_for_user(user['email'])
+    if df.empty:
         st.info("No synced activity data found. Use 'Fetch Data' in the left sidebar to pull from Garmin.")
         return
     # KPIs
     kpi_cols = []
-    if 'totalSteps' in df_activity.columns:
-        kpi_cols.append(("Avg Daily Steps", df_activity['totalSteps'].mean()))
-    if 'restingHeartRate' in df_activity.columns:
-        kpi_cols.append(("Avg Resting HR", df_activity['restingHeartRate'].mean()))
-    if 'sleepTimeHours' in df_activity.columns:
-        kpi_cols.append(("Avg Sleep (hrs)", df_activity['sleepTimeHours'].mean()))
+    if 'totalSteps' in df.columns:
+        kpi_cols.append(("Avg Daily Steps", df['totalSteps'].mean()))
+    if 'restingHeartRate' in df.columns:
+        kpi_cols.append(("Avg Resting HR", df['restingHeartRate'].mean()))
+    if 'sleepTimeHours' in df.columns:
+        kpi_cols.append(("Avg Sleep (hrs)", df['sleepTimeHours'].mean()))
     cols = st.columns(len(kpi_cols) if kpi_cols else 1)
     for i, (label, val) in enumerate(kpi_cols):
         with cols[i]:
             st.metric(label=label, value=f"{val:.1f}" if not math.isnan(val) else "N/A")
     st.markdown("### Recent data preview")
-    st.dataframe(df_activity.sort_values("Date", ascending=False).head(10))
+    st.dataframe(df.sort_values("Date", ascending=False).head(10))
 
-def show_activity_trends_page(user, df_activity):
+def show_activity_trends_page(user):
     st.title("Activity Trends")
-    if df_activity.empty:
+    df = read_activity_for_user(user['email'])
+    if df.empty:
         st.info("No activity data available. Sync data first.")
         return
     col1, col2 = st.columns(2)
     with col1:
-        if 'restingHeartRate' in df_activity.columns:
-            fig = px.line(df_activity.sort_values("Date"), x="Date", y="restingHeartRate", title="Resting Heart Rate")
+        if 'restingHeartRate' in df.columns:
+            fig = px.line(df.sort_values("Date"), x="Date", y="restingHeartRate", title="Resting Heart Rate")
             st.plotly_chart(fig, use_container_width=True)
         else:
             st.warning("restingHeartRate column missing")
     with col2:
-        if 'totalSteps' in df_activity.columns:
-            fig = px.bar(df_activity.sort_values("Date"), x="Date", y="totalSteps", title="Daily Steps", color='ActivityPerformedToday' if 'ActivityPerformedToday' in df_activity.columns else None)
+        if 'totalSteps' in df.columns:
+            fig = px.bar(df.sort_values("Date"), x="Date", y="totalSteps",
+                         title="Daily Steps",
+                         color='ActivityPerformedToday' if 'ActivityPerformedToday' in df.columns else None)
             st.plotly_chart(fig, use_container_width=True)
         else:
             st.warning("totalSteps column missing")
 
-def show_sleep_analysis_page(user, df_activity):
+def show_sleep_analysis_page(user):
     st.title("Sleep Analysis")
-    if df_activity.empty:
+    df = read_activity_for_user(user['email'])
+    if df.empty:
         st.info("No activity data available. Sync data first.")
         return
-    if all(c in df_activity.columns for c in ['sleepTimeHours', 'deepSleepHours', 'Date']):
-        df_sleep = df_activity[['Date','sleepTimeHours','deepSleepHours']].dropna().copy()
+    if all(c in df.columns for c in ['sleepTimeHours', 'deepSleepHours', 'Date']):
+        df_sleep = df[['Date','sleepTimeHours','deepSleepHours']].dropna().copy()
         df_sleep['deepPerc'] = (df_sleep['deepSleepHours'] / df_sleep['sleepTimeHours']).clip(0,1)*100
         avg_by_dow = df_sleep.copy()
         avg_by_dow['dow'] = avg_by_dow['Date'].dt.day_name()
-        avg = avg_by_dow.groupby('dow')[['sleepTimeHours','deepSleepHours']].mean().reindex(['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday']).fillna(0)
+        avg = (avg_by_dow
+               .groupby('dow')[['sleepTimeHours','deepSleepHours']]
+               .mean()
+               .reindex(['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'])
+               .fillna(0))
         avg['variance_score'] = (avg['sleepTimeHours'] - avg['deepSleepHours']).abs()
         fig = px.bar(avg.reset_index(), x='dow', y='variance_score', title="Sleep variance by weekday")
         st.plotly_chart(fig, use_container_width=True)
@@ -373,8 +414,9 @@ def show_sleep_analysis_page(user, df_activity):
     else:
         st.warning("Required sleep columns are missing")
 
-def show_insights_page(user, df_activity):
+def show_insights_page(user):
     st.title("Insights")
+    df = read_activity_for_user(user['email'])
     goals_df = read_goals()
     user_goals = goals_df[goals_df['user_email'] == user['email']].copy() if not goals_df.empty else pd.DataFrame()
     # Goals summary table + progress bar chart
@@ -387,16 +429,17 @@ def show_insights_page(user, df_activity):
         user_goals['forecast_value'] = pd.to_numeric(user_goals['forecast_value'], errors='coerce').fillna(np.nan)
         table_show = user_goals[['goal_id','goal_type','start_value','target_value','target_date','status','progress_pct','forecast_value','forecast_success']].copy()
         st.dataframe(table_show)
-        fig = px.bar(table_show.sort_values('progress_pct', ascending=False), x='goal_type', y='progress_pct', color='forecast_success', title="Goal progress %")
+        fig = px.bar(table_show.sort_values('progress_pct', ascending=False),
+                     x='goal_type', y='progress_pct', color='forecast_success', title="Goal progress %")
         st.plotly_chart(fig, use_container_width=True)
     # Forecast vs target charts
     st.subheader("Forecast vs Target")
-    if (not user_goals.empty) and (not df_activity.empty):
+    if (not user_goals.empty) and (not df.empty):
         for _, g in user_goals.iterrows():
             metric_col = map_goal_type_to_column(g['goal_type'])
             st.markdown(f"**{g['goal_type']}** target: {g['target_value']} by {g['target_date']}")
-            if metric_col and metric_col in df_activity.columns:
-                hist = df_activity[['Date', metric_col]].dropna().sort_values('Date')
+            if metric_col and metric_col in df.columns:
+                hist = df[['Date', metric_col]].dropna().sort_values('Date')
                 if hist.empty:
                     st.info("No historical values for this metric.")
                     continue
@@ -416,23 +459,23 @@ def show_insights_page(user, df_activity):
                 st.info(f"No data mapped for goal type {g['goal_type']}.")
     # Rolling trends
     st.subheader("Rolling 7-day trends")
-    if not df_activity.empty:
+    if not df.empty:
         to_plot = []
-        if 'totalSteps' in df_activity.columns: to_plot.append(('totalSteps','Daily steps'))
-        if 'restingHeartRate' in df_activity.columns: to_plot.append(('restingHeartRate','Resting HR'))
-        if 'sleepTimeHours' in df_activity.columns: to_plot.append(('sleepTimeHours','Sleep hours'))
+        if 'totalSteps' in df.columns: to_plot.append(('totalSteps','Daily steps'))
+        if 'restingHeartRate' in df.columns: to_plot.append(('restingHeartRate','Resting HR'))
+        if 'sleepTimeHours' in df.columns: to_plot.append(('sleepTimeHours','Sleep hours'))
         for col, title in to_plot:
-            tmp = df_activity[['Date', col]].dropna().sort_values('Date')
+            tmp = df[['Date', col]].dropna().sort_values('Date')
             tmp['rolling7'] = tmp[col].rolling(7, min_periods=1).mean()
             fig = px.line(tmp, x='Date', y='rolling7', title=f"{title} (7-day rolling avg)")
             st.plotly_chart(fig, use_container_width=True)
     # LLM summary
     st.subheader("AI Assistant Summary")
     summary_dict = {
-        "days_tracked": len(df_activity),
-        "avg_steps": float(df_activity['totalSteps'].mean()) if 'totalSteps' in df_activity.columns and not df_activity['totalSteps'].isnull().all() else None,
-        "avg_resting_hr": float(df_activity['restingHeartRate'].mean()) if 'restingHeartRate' in df_activity.columns and not df_activity['restingHeartRate'].isnull().all() else None,
-        "avg_sleep_hours": float(df_activity['sleepTimeHours'].mean()) if 'sleepTimeHours' in df_activity.columns and not df_activity['sleepTimeHours'].isnull().all() else None
+        "days_tracked": len(df),
+        "avg_steps": float(df['totalSteps'].mean()) if 'totalSteps' in df.columns and not df['totalSteps'].isnull().all() else None,
+        "avg_resting_hr": float(df['restingHeartRate'].mean()) if 'restingHeartRate' in df.columns and not df['restingHeartRate'].isnull().all() else None,
+        "avg_sleep_hours": float(df['sleepTimeHours'].mean()) if 'sleepTimeHours' in df.columns and not df['sleepTimeHours'].isnull().all() else None
     }
     # create cluster summary text placeholder (you could add kmeans clusters here like before)
     cluster_summary_text = "Daily segments not computed (or not available)."
@@ -452,7 +495,7 @@ def show_insights_page(user, df_activity):
     llm_text = generate_llm_insights(summary_dict, cluster_summary_text, goals_list, viewer_role="user")
     st.markdown(llm_text)
 
-def show_goals_page(user, df_activity):
+def show_goals_page(user):
     st.title("Goals")
     st.subheader("Create a new goal")
     with st.form("create_goal"):
@@ -467,9 +510,10 @@ def show_goals_page(user, df_activity):
             else:
                 # get start value from most recent data
                 metric_col = map_goal_type_to_column(goal_type)
+                df = read_activity_for_user(user['email'])
                 start_val = None
-                if metric_col and (not df_activity.empty) and metric_col in df_activity.columns:
-                    start_val = df_activity[metric_col].dropna().iloc[-1]
+                if metric_col and (not df.empty) and metric_col in df.columns:
+                    start_val = df[metric_col].dropna().iloc[-1]
                 else:
                     start_val = ""
                 # build goal row
@@ -522,99 +566,111 @@ def show_coach_dashboard(coach_user):
                 users = read_users()
                 if (not users.empty) and (users['email'] == athlete_email).any():
                     st.warning("This athlete already exists in Users tab. Updating linked_coach_email.")
-                    # update by adding a new row (simple approach)
                     append_user_row(athlete_email, role="user", linked_coach_email=coach_user['email'])
                 else:
                     append_user_row(athlete_email, role="user", linked_coach_email=coach_user['email'])
                 st.success(f"Invited {athlete_email}. They will need to sign in and sync Garmin data.")
 
-# ------------------------------
+# ==========================================================
 # Sidebar: Garmin Fetch & Login
-# ------------------------------
+# ==========================================================
 st.sidebar.header("Garmin & Account")
-login_panel()
+user_profile = login_panel()
 
-# If not logged in, stop further UI
-if not st.session_state.user_profile:
-    st.title("Garmin Coach Dashboard")
-    st.markdown("Please sign in or register via the left sidebar.")
-    st.stop()
-else:
-    # Garmin fetch (if logged in as user)
-    user_profile = st.session_state.user_profile
+def _compute_fetch_start_date_for_user(user_email: str) -> date:
+    """
+    If user has ActivityData rows:
+        start_date = last Date + 1
+    Else:
+        start_date = 2024-01-01
+    """
+    try:
+        df_user = read_activity_for_user(user_email)
+        if df_user.empty or 'Date' not in df_user.columns or df_user['Date'].dropna().empty:
+            return pd.to_datetime("2024-01-01").date()
+        last_dt = pd.to_datetime(df_user['Date'].max()).date()
+        return (last_dt + timedelta(days=1))
+    except Exception:
+        return pd.to_datetime("2024-01-01").date()
+
+# Garmin fetch (if logged in as user)
+if user_profile:
     st.sidebar.markdown(f"Signed in as: **{user_profile['email']}** ({user_profile['role']})")
-    
-    # Read and cache activity data for the logged-in user
-    df_activity = read_activity_for_user(user_profile['email'])
-    
-    st.sidebar.markdown("Sync your Garmin data (will write to ActivityData sheet)")
+    st.sidebar.markdown("Sync your Garmin data (writes to ActivityData sheet)")
     uname = st.sidebar.text_input("Garmin Username (email)", value="")
     pwd = st.sidebar.text_input("Garmin Password", type="password")
+
+    # Show computed fetch range for transparency
+    intended_start_date = _compute_fetch_start_date_for_user(user_profile['email'])
+    today_date = date.today()
+    st.sidebar.caption(f"Planned fetch range: {intended_start_date.isoformat()} → {today_date.isoformat()}")
+
     if st.sidebar.button("Fetch Data from Garmin"):
         if not uname or not pwd:
             st.sidebar.error("Enter Garmin credentials to fetch.")
         else:
-            with st.spinner("Fetching and preprocessing Garmin data (this can take a minute)..."):
-                try:
-                    df = preprocessing_garmin_data(uname, pwd)
-                    # attach user email and write to ActivityData
-                    append_activity_data(df, user_profile['email'])
-                    st.success("Data fetched and appended to ActivityData sheet.")
-                    # Rerun the app to update the cached data
-                    st.experimental_rerun()
-                except Exception as e:
-                    st.error(f"Error fetching Garmin data: {e}")
+            # Guard: if we're already up to date, skip
+            if intended_start_date > today_date:
+                st.sidebar.info("Already up to date — no new days to fetch.")
+            else:
+                with st.spinner("Fetching and preprocessing Garmin data (this can take a minute)..."):
+                    try:
+                        # Pass start_date to preprocessing; it returns a prepped DataFrame only
+                        df = preprocessing_garmin_data(uname, pwd, start_date=intended_start_date)
+                        if df is None or df.empty:
+                            st.warning("No new Garmin data returned for the requested window.")
+                        else:
+                            # attach user email and write to ActivityData
+                            append_activity_data(df, user_profile['email'])
+                            st.success(f"Fetched {df.shape[0]} rows and appended to ActivityData.")
+                    except Exception as e:
+                        st.error(f"Error fetching Garmin data: {e}")
 
-    # ------------------------------
-    # Main Navigation
-    # ------------------------------
-    menu_options = ["My Dashboard", "Insights", "Activity Trends", "Sleep Analysis", "Goals", "Settings"]
+# If not logged in, stop further UI
+if not user_profile:
+    st.title("Garmin Coach Dashboard")
+    st.markdown("Please sign in or register via the left sidebar.")
+    st.stop()
+
+# ==========================================================
+# Main Navigation
+# ==========================================================
+menu_options = ["My Dashboard", "Insights", "Activity Trends", "Sleep Analysis", "Goals", "Settings"]
+if user_profile.get('role') == 'coach':
+    menu_options.insert(1, "Coach Dashboard")
+
+choice = st.sidebar.selectbox("Go to", menu_options)
+
+# Render pages
+if choice == "My Dashboard":
+    show_overview_page(user_profile)
+elif choice == "Insights":
+    show_insights_page(user_profile)
+elif choice == "Activity Trends":
+    show_activity_trends_page(user_profile)
+elif choice == "Sleep Analysis":
+    show_sleep_analysis_page(user_profile)
+elif choice == "Goals":
+    show_goals_page(user_profile)
+elif choice == "Coach Dashboard":
     if user_profile.get('role') == 'coach':
-        menu_options.insert(1, "Coach Dashboard")
+        show_coach_dashboard(user_profile)
+    else:
+        st.error("Coach Dashboard accessible only to users with role='coach'")
+elif choice == "Settings":
+    st.title("Settings")
+    st.write("Account email:", user_profile['email'])
+    st.write("Role:", user_profile['role'])
+    st.write("Linked coach:", user_profile.get('linked_coach_email', 'None'))
+    st.info("To change roles or certified status edit the Users sheet directly or extend this page to support admin actions.")
 
-    choice = st.sidebar.selectbox("Go to", menu_options)
-
-    # Render pages
-    if choice == "My Dashboard":
-        show_overview_page(user_profile, df_activity)
-    elif choice == "Insights":
-        show_insights_page(user_profile, df_activity)
-    elif choice == "Activity Trends":
-        show_activity_trends_page(user_profile, df_activity)
-    elif choice == "Sleep Analysis":
-        show_sleep_analysis_page(user_profile, df_activity)
-    elif choice == "Goals":
-        show_goals_page(user_profile, df_activity)
-    elif choice == "Coach Dashboard":
-        if user_profile.get('role') == 'coach':
-            show_coach_dashboard(user_profile)
-        else:
-            st.error("Coach Dashboard accessible only to users with role='coach'")
-    elif choice == "Settings":
-        st.title("Settings")
-        st.write("Account email:", user_profile['email'])
-        st.write("Role:", user_profile['role'])
-        st.write("Linked coach:", user_profile.get('linked_coach_email', 'None'))
-        st.info("To change roles or certified status edit the Users sheet directly or extend this page to support admin actions.")
-
-# ------------------------------
+# ==========================================================
 # Background: update forecasts for goals if ActivityData exists
-# ------------------------------
+# ==========================================================
 def recompute_all_goal_forecasts():
     goals_df = read_goals()
     if goals_df.empty:
         return
-    
-    # Read the entire activity data only once
-    sh = ensure_sheet_and_tabs("Garmin_User_Data")
-    ws_activity = sh.worksheet("ActivityData")
-    df_activity_full = pd.DataFrame(ws_activity.get_all_records())
-    if 'user_email' not in df_activity_full.columns:
-        return
-    if 'Date' in df_activity_full.columns:
-        df_activity_full['Date'] = pd.to_datetime(df_activity_full['Date'])
-    
-    updated = False
     for idx, g in goals_df.iterrows():
         try:
             # skip if already completed
@@ -624,14 +680,15 @@ def recompute_all_goal_forecasts():
             if not metric_col:
                 continue
             user_email = g['user_email']
-            
-            # Filter the already loaded dataframe in memory, instead of re-reading from API
-            df_user = df_activity_full[df_activity_full['user_email'] == user_email].copy()
+            df_user = read_activity_for_user(user_email)
             if df_user.empty or metric_col not in df_user.columns:
                 continue
-            
             # forecast
-            forecast_val, model = forecast_metric_on_date(df_user[['Date', metric_col]].rename(columns={metric_col: metric_col}), metric_col, g['target_date'])
+            forecast_val, model = forecast_metric_on_date(
+                df_user[['Date', metric_col]].rename(columns={metric_col: metric_col}),
+                metric_col,
+                g['target_date']
+            )
             # compute progress: if start_value exists, use it. else pick earliest value available
             try:
                 start_value = float(g['start_value']) if g.get('start_value') not in (None, "", "nan") else float(df_user[metric_col].dropna().iloc[0])
@@ -661,15 +718,13 @@ def recompute_all_goal_forecasts():
             # write back updates
             updates = {
                 "forecast_value": float(forecast_val) if forecast_val is not None else "",
-                "progress_pct": round(float(progress_pct),2) if progress_pct != "" else "",
+                "progress_pct": round(float(progress_pct), 2) if progress_pct != "" else "",
                 "forecast_success": str(forecast_success)
             }
             update_goal_row(g['goal_id'], updates)
-            updated = True
-        except Exception as e:
+        except Exception:
             # skip problematic goals
             continue
-    return updated
 
 # recompute forecasts for all goals on app load (lightweight)
 try:
