@@ -60,7 +60,7 @@ GARMIN_HEADERS = [
         "ActivityStartHour","ActivityPerformedToday","activityType","workout_date","last_workout_date",
         "daysSinceLastWorkout","sleepTimeHours","deepSleepHours","remSleepHours","lightSleepHours",
         "awakeSleepHours","deepSleepPercentage","remSleepPercentage","lightSleepPercentage","awakeSleepPercentage",
-        "day_of_week","is_weekend","month","day_of_year","user_email"
+        "day_of_week","is_weekend","month","day_of_year"
     ]
 
 # ==========================================================
