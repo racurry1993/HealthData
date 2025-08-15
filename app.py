@@ -323,33 +323,24 @@ def generate_llm_insights(summary_dict, cluster_summary_text, goals_list, viewer
 # ==========================================================
 def login_panel():
     st.sidebar.title("Sign in / Register")
-
-    # Initialize a login state in session_state if it doesn't exist
-    if "logged_in" not in st.session_state:
-        st.session_state.logged_in = False
-        st.session_state.current_user = None
-
-    # Use a form to group the login widgets and handle the submission with a single button click
-    with st.sidebar.form(key="login_form"):
-        st.subheader("Login to your account")
-        email = st.text_input("Email", placeholder="your@email.com")
-        # Use type="password" to hide the user's input
-        password = st.text_input("Password", type="password")
-
-        # Create a button for login
-        login_button = st.form_submit_button(label="Login")
-
-        if login_button:
-            # Add your login validation logic here
-            # For this example, let's assume a hardcoded user and password
-            if email == "test@example.com" and password == "password123":
-                st.session_state.logged_in = True
-                st.session_state.current_user = email
-                st.success("Logged in successfully!")
-            else:
-                st.error("Invalid email or password.")
-                st.session_state.logged_in = False
-
+    email = st.sidebar.text_input("Email", value="", placeholder="your@email.com")
+    role_choice = st.sidebar.selectbox("Register as (if new)", ["user", "coach"])
+    btn = st.sidebar.button("Login / Register")
+    if btn:
+        if not email:
+            st.sidebar.error("Please enter an email")
+            return None
+        users = read_users()
+        if not users.empty and (users['email'] == email).any():
+            user_row = users[users['email'] == email].iloc[0].to_dict()
+            st.sidebar.success(f"Welcome back: {email} ({user_row.get('role')})")
+            return user_row
+        else:
+            append_user_row(email, role=role_choice)
+            st.sidebar.success(f"Registered {email} as {role_choice}. Re-click login to load profile.")
+            return {"email": email, "role": role_choice, "linked_coach_email": "", "certified_coach": False}
+    return None
+    
     # After login, the login form will disappear and the fetch data button will appear
     if st.session_state.logged_in:
         st.sidebar.button("Fetch Data")
