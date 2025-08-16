@@ -689,7 +689,7 @@ if user_profile:
                     try:
                         # Pass start_date to preprocessing; it returns a prepped DataFrame only
                         df = preprocessing_garmin_data(uname, pwd, start_date=intended_start_date, end_date=date.today(),
-                                                      headers=GARMIN_HEADERS)
+                                                      )
                         if df is None or df.empty:
                             st.warning("No new Garmin data returned for the requested window.")
                         else:
