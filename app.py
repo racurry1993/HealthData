@@ -390,11 +390,11 @@ def show_overview_page(user):
     # KPIs
     kpi_cols = []
     if 'totalSteps' in df.columns:
-        kpi_cols.append(("Avg Daily Steps", df['totalSteps'].mean()))
+        kpi_cols.append(("Avg Daily Steps", pd.to_numeric(df['totalSteps'], errors='coerce').mean()))
     if 'restingHeartRate' in df.columns:
-        kpi_cols.append(("Avg Resting HR", df['restingHeartRate'].mean()))
+        kpi_cols.append(("Avg Resting HR", pd.to_numeric(df['restingHeartRate'], errors='coerce').mean()))
     if 'sleepTimeHours' in df.columns:
-        kpi_cols.append(("Avg Sleep (hrs)", df['sleepTimeHours'].mean()))
+        kpi_cols.append(("Avg Sleep (hrs)", pd.to_numeric(df['sleepTimeHours'], errors='coerce').mean()))
     cols = st.columns(len(kpi_cols) if kpi_cols else 1)
     for i, (label, val) in enumerate(kpi_cols):
         with cols[i]:
