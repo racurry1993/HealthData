@@ -476,6 +476,13 @@ def preprocessing_garmin_data(username, password, start_date, end_date):
     df_cleaned['day_of_year'] = df_cleaned['Date'].dt.dayofyear
     print("Created time-based features (day_of_week, is_weekend, month, day_of_year).")
     df_cleaned = df_cleaned.drop_duplicates(subset='Date')
+    numeric_columns = ['totalSteps', 'ActivitySteps', 'calories', 'bmrCalories',
+                   'averageHR', 'maxHR', 'movingDuration', 'elapsedDuration']
+
+    for col in numeric_columns:
+        if col in df_cleaned.columns:
+            df_cleaned[col] = pd.to_numeric(df_cleaned[col], errors='coerce').fillna(0)
+
     return df_cleaned
 
 
