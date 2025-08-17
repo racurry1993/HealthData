@@ -461,13 +461,15 @@ def preprocessing_garmin_data(username, password, start_date, end_date):
 
     # --- Convert sleep seconds to hours for better readability ---
     sleep_cols_seconds = ['sleepTimeSeconds', 'deepSleepSeconds', 'remSleepSeconds', 'lightSleepSeconds', 'awakeSleepSeconds']
-    for col in sleep_cols_seconds:
+    sleep_cols_rename = ['sleepTimeHours','deepSleepHours','remSleepHours','lightSleepHours','awakeSleepHours']
+    for col, new_col in zip(sleep_cols_seconds, sleep_cols_rename):
         df_cleaned[col.replace('Seconds', 'Hours')] = df_cleaned[col] / 3600
+        df_cleaned.rename({col: new_col}, axis=1, inplace=True)
 
-    df_cleaned['deepSleepPercentage'] = (df_cleaned['deepSleepSeconds'] / df_cleaned['sleepTimeSeconds']) * 100
-    df_cleaned['remSleepPercentage'] = (df_cleaned['remSleepSeconds'] / df_cleaned['sleepTimeSeconds']) * 100
-    df_cleaned['lightSleepPercentage'] = (df_cleaned['lightSleepSeconds'] / df_cleaned['sleepTimeSeconds']) * 100
-    df_cleaned['awakeSleepPercentage'] = (df_cleaned['awakeSleepSeconds'] / df_cleaned['sleepTimeSeconds']) * 100 # Might be high if sleepTimeSeconds includes awake time
+    df_cleaned['deepSleepPercentage'] = (df_cleaned['deepSleepHours'] / df_cleaned['sleepTimeHours']) * 100
+    df_cleaned['remSleepPercentage'] = (df_cleaned['remSleepHours'] / df_cleaned['sleepTimeHours']) * 100
+    df_cleaned['lightSleepPercentage'] = (df_cleaned['lightSleepHours'] / df_cleaned['sleepTimeHours']) * 100
+    df_cleaned['awakeSleepPercentage'] = (df_cleaned['awakeSleepHours'] / df_cleaned['sleepTimeHours']) * 100 # Might be high if sleepTimeSeconds includes awake time
 
     # Time-based features
     df_cleaned['day_of_week'] = df_cleaned['Date'].dt.day_name()
@@ -484,6 +486,3 @@ def preprocessing_garmin_data(username, password, start_date, end_date):
             df_cleaned[col] = pd.to_numeric(df_cleaned[col], errors='coerce').fillna(0)
 
     return df_cleaned
-
-
-#df = preprocessing_garmin_data("racurry93@gmail.com", "Bravesr1")
