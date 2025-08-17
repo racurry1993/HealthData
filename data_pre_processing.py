@@ -463,6 +463,10 @@ def preprocessing_garmin_data(username, password, start_date, end_date):
     sleep_cols_seconds = ['sleepTimeSeconds', 'deepSleepSeconds', 'remSleepSeconds', 'lightSleepSeconds', 'awakeSleepSeconds']
     sleep_cols_rename = ['sleepTimeHours','deepSleepHours','remSleepHours','lightSleepHours','awakeSleepHours']
     for col, new_col in zip(sleep_cols_seconds, sleep_cols_rename):
+        try:
+            df_cleaned.drop(new_col, inplace=True, axis=1)
+        except Exception as e:
+            print('{new_col} does not exist')
         df_cleaned[col.replace('Seconds', 'Hours')] = df_cleaned[col] / 3600
         df_cleaned.rename({col: new_col}, axis=1, inplace=True)
 
