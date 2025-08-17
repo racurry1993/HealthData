@@ -475,6 +475,12 @@ def preprocessing_garmin_data(username, password, start_date, end_date):
     df_cleaned['lightSleepPercentage'] = (df_cleaned['lightSleepHours'] / df_cleaned['sleepTimeHours']) * 100
     df_cleaned['awakeSleepPercentage'] = (df_cleaned['awakeSleepHours'] / df_cleaned['sleepTimeHours']) * 100 # Might be high if sleepTimeSeconds includes awake time
 
+    num_cols = ['sleepTimeHours', 'deepSleepHours', 'remSleepHours', 'lightSleepHours', 'awakeSleepHours', 'deepSleepPercentage', 'remSleepPercentage',
+            'lightSleepPercentage', 'awakeSleepPercentage']
+
+    for col in num_cols:
+        df_cleaned[col] = df_cleaned[col].astype(float)
+    
     # Time-based features
     df_cleaned['day_of_week'] = df_cleaned['Date'].dt.day_name()
     df_cleaned['is_weekend'] = df_cleaned['Date'].dt.weekday.isin([5, 6]).astype(int)
