@@ -6,6 +6,7 @@ def preprocessing_garmin_data(username, password, start_date, end_date):
     import logging
     import seaborn as sns
     import numpy as np
+    from sklearn.linear_model import LinearRegression
 
     # --- Logging Setup ---
     now = datetime.datetime.now()
@@ -118,8 +119,8 @@ def preprocessing_garmin_data(username, password, start_date, end_date):
     missing_percentage_cols(total_sleep_df)
 
     total_bb_df = pd.DataFrame()
-    total_rhr_df = pd.DataFrame()
-    total_steps_df = pd.DataFrame()
+    #total_rhr_df = pd.DataFrame()
+    #total_steps_df = pd.DataFrame()
     total_user_df = pd.DataFrame()
     for dt in date_range:
         logger.info(f"Fetching data for period: {dt}")
@@ -132,22 +133,22 @@ def preprocessing_garmin_data(username, password, start_date, end_date):
             total_bb_df = pd.concat([total_bb_df, bb_df[['Date','charged','drained']]], axis=0)
 
             ##RestingHR DF
-            rhr_df = pd.DataFrame(api.get_rhr_day(dt))
+            #rhr_df = pd.DataFrame(api.get_rhr_day(dt))
             #rhr_df['allMetricsClean'] = rhr_df['allMetrics'].apply(
             #    lambda x: x.get('WELLNESS_RESTING_HEART_RATE') if isinstance(x, dict) else None
             #)
             # Apply the function to the 'allMetricsClean' column
             #rhr_df['resting_heart_rate_value'] = rhr_df['allMetricsClean'].apply(get_rhr_value)
-            rhr_df.rename({'statisticsStartDate':'Date'}, axis=1, inplace=True)
-            total_rhr_df = pd.concat([total_rhr_df, rhr_df], axis=0)
+            #rhr_df.rename({'statisticsStartDate':'Date'}, axis=1, inplace=True)
+            #total_rhr_df = pd.concat([total_rhr_df, rhr_df], axis=0)
 
 
             ##Steps DF
-            steps_df = pd.DataFrame(api.get_steps_data(dt))
-            steps_df['Date'] = pd.to_datetime(steps_df['startGMT']).dt.strftime('%Y-%m-%d')
-            steps_df = steps_df.groupby(['Date'])[['steps','pushes']].sum().head()
-            steps_df.reset_index(inplace=True)
-            total_steps_df = pd.concat([total_steps_df, steps_df], axis=0)
+            #steps_df = pd.DataFrame(api.get_steps_data(dt))
+            #steps_df['Date'] = pd.to_datetime(steps_df['startGMT']).dt.strftime('%Y-%m-%d')
+            #steps_df = steps_df.groupby(['Date'])[['steps','pushes']].sum().head()
+            #steps_df.reset_index(inplace=True)
+            #total_steps_df = pd.concat([total_steps_df, steps_df], axis=0)
 
             ##User Summary Data
             user = pd.DataFrame(api.get_user_summary(dt))
@@ -158,18 +159,27 @@ def preprocessing_garmin_data(username, password, start_date, end_date):
             logger.error(f"Unexpected error during data processing: {e}", exc_info=True)
 
     total_user_df.rename({'calendarDate':'Date'}, axis=1, inplace=True)
-
+    total_user_df.drop(['userProfileId','userDailySummaryId','rule','uuid',
+                    'wellnessStartTimeGmt','wellnessStartTimeLocal','wellnessEndTimeGmt',
+                    'wellnessEndTimeLocal','wellnessDescription','includesWellnessData',
+                    'includesActivityData','includesCalorieConsumedData','privacyProtected',
+                    'source','lastSyncTimestampGMT','bodyBatteryVersion','bodyBatteryAtWakeTime',
+                    'averageSpo2','latestRespirationTimeGMT','respirationAlgorithmVersion','abnormalHeartRateAlertsCount'
+    ], axis=1, inplace=True)
     mn = min(date_range)
     mx = max(date_range)
     total_activity_df = pd.DataFrame()
     logger.info("Getting activities data...")
+    total_activity_df = pd.DataFrame()
+    mn = min(date_range)
+    mx = max(date_range)
     try:
         activities = api.get_activities_by_date(mn, mx)
         activity_df = pd.DataFrame(activities)
         total_activity_df = pd.concat([total_activity_df, activity_df], axis=0)
 
     except Exception as e:
-        logger.error(f"Error during activities data pull: {e}", exc_info=True)
+        logger.error(f"Unexpected error during data processing: {e}", exc_info=True)
 
     total_activity_df['typeKey_clean'] = total_activity_df['activityType'].apply(
         lambda x: x.get('typeKey') if isinstance(x, dict) else None
@@ -179,8 +189,60 @@ def preprocessing_garmin_data(username, password, start_date, end_date):
     cols_mapping = total_activity_df.columns.drop('Date').to_list()
     cols_mapping = ['Date'] + cols_mapping
     total_activity_df = total_activity_df[cols_mapping]
+    keep_cols = ['Date','startTimeLocal','distance','duration','elapsedDuration','movingDuration',
+                'elevationGain', 'elevationLoss', 'averageSpeed', 'maxSpeed',
+                'calories','bmrCalories','averageHR','maxHR','averageRunningCadenceInStepsPerMinute',
+                'maxRunningCadenceInStepsPerMinute','steps','anaerobicTrainingEffect','avgStrideLength','vO2MaxValue',
+                'minTemperature','maxTemperature','minElevation','maxElevation','maxVerticalSpeed','waterEstimated',
+                'activityTrainingLoad','minActivityLapDuration','aerobicTrainingEffectMessage','moderateIntensityMinutes',
+                'vigorousIntensityMinutes','hrTimeInZone_1','hrTimeInZone_2','hrTimeInZone_3','hrTimeInZone_4','hrTimeInZone_5',
+                'typeKey_clean'
+                ]
+    total_activity_df['startTimeLocal'] = pd.to_datetime(total_activity_df['startTimeLocal'])
+    total_activity_df['startHour'] = total_activity_df['startTimeLocal'].dt.hour
+    def startTimeCategoryManipulator(row):
+        if row['startHour'] <= 10:
+            return 'Morning'
+        elif row['startHour'] > 10 and row['startHour'] <= 15:
+            return 'Afternoon'
+        elif row['startHour'] > 15:
+            return 'Night'
+        else:
+            return 'Unknown'
+    total_activity_df['startTimeCat'] = total_activity_df.apply(startTimeCategoryManipulator, axis=1)
+    total_activity_df_final = total_activity_df.copy()
+    agg_dict = {}
 
-    dataframes = [total_activity_df, total_sleep_df, total_bb_df, total_rhr_df, total_steps_df, total_user_df]
+    sum_cols = ['distance', 'duration', 'elapsedDuration', 'movingDuration',
+                'elevationGain', 'elevationLoss', 'calories', 'bmrCalories',
+                'steps', 'waterEstimated', 'activityTrainingLoad',
+                'moderateIntensityMinutes', 'vigorousIntensityMinutes',
+                'hrTimeInZone_1', 'hrTimeInZone_2', 'hrTimeInZone_3', 'hrTimeInZone_4', 'hrTimeInZone_5'
+                ]
+    for col in sum_cols:
+        agg_dict[col] = 'sum'
+    max_cols = ['maxSpeed', 'maxHR', 'maxRunningCadenceInStepsPerMinute', 'maxTemperature',
+                'maxElevation', 'maxVerticalSpeed', 'vO2MaxValue', 'anaerobicTrainingEffect'
+                ]
+    for col in max_cols:
+        agg_dict[col] = 'max'
+    min_cols = ['minTemperature', 'minElevation', 'minActivityLapDuration']
+    for col in min_cols:
+        agg_dict[col] = 'min'
+    mean_cols = ['averageSpeed', 'averageHR', 'averageRunningCadenceInStepsPerMinute', 'avgStrideLength']
+
+    for col in mean_cols:
+        agg_dict[col] = 'mean'
+
+    string_cols = ['aerobicTrainingEffectMessage', 'typeKey_clean']
+
+    for col in string_cols:
+        agg_dict[col] = lambda x: ', '.join(x.dropna().unique())
+
+    # Perform the aggregation and reassign the result to your DataFrame
+    total_activity_df_final = total_activity_df_final.groupby('Date').agg(agg_dict).reset_index()
+
+    dataframes = [total_activity_df_final, total_sleep_df, total_bb_df, total_user_df]
     for missing_data in dataframes:
         print(f"Missing Data for DF")
         missing_percentage_cols(missing_data)
@@ -209,7 +271,7 @@ def preprocessing_garmin_data(username, password, start_date, end_date):
     #5.) total_steps_df #Steps data
     #6.) total_user_df #User summary data
 
-    df_list = [total_activity_df, total_sleep_df, total_bb_df, total_rhr_df, total_steps_df, total_user_df]
+    df_list = [total_activity_df, total_sleep_df, total_bb_df, total_user_df]
 
     try:
         logger.info("Starting combination of dataframes...")
@@ -349,15 +411,15 @@ def preprocessing_garmin_data(username, password, start_date, end_date):
         'hrTimeInZone_5', 'distance', 'duration', 'elapsedDuration', 'calories', 'averageSpeed',
         'maxHR', 'averageHR', 'aerobicTrainingEffect', 'anaerobicTrainingEffect', 'lapCount',
         'waterEstimated', 'activityTrainingLoad', 'minActivityLapDuration',
-        'moderateIntensityMinutes_x', 'vigorousIntensityMinutes_x', 'steps_y', 'pushes',
+        'moderateIntensityMinutes', 'vigorousIntensityMinutes', 'steps', 'pushes',
         'totalKilocalories', 'activeKilocalories', 'bmrKilocalories', 'wellnessKilocalories',
         'remainingKilocalories', 'totalSteps', 'netCalorieGoal', 'totalDistanceMeters',
         'wellnessDistanceMeters', 'wellnessActiveKilocalories', 'netRemainingKilocalories',
         'dailyStepGoal', 'highlyActiveSeconds', 'activeSeconds', 'sedentarySeconds',
-        'sleepingSeconds', 'moderateIntensityMinutes_y', 'vigorousIntensityMinutes_y',
+        'sleepingSeconds', 'moderateIntensityMinutes', 'vigorousIntensityMinutes',
         'floorsAscendedInMeters', 'floorsDescendedInMeters', 'floorsAscended', 'floorsDescended',
         'intensityMinutesGoal', 'userFloorsAscendedGoal', 'minHeartRate', 'maxHeartRate',
-        'restingHeartRate_y', 'lastSevenDaysAvgRestingHeartRate', 'averageStressLevel',
+        'lastSevenDaysAvgRestingHeartRate', 'averageStressLevel',
         'maxStressLevel', 'stressDuration', 'restStressDuration', 'activityStressDuration',
         'uncategorizedStressDuration', 'totalStressDuration', 'lowStressDuration',
         'mediumStressDuration', 'highStressDuration', 'stressPercentage', 'restStressPercentage',
@@ -373,7 +435,42 @@ def preprocessing_garmin_data(username, password, start_date, end_date):
         if col in df_cleaned.columns:
             df_cleaned[col] = df_cleaned[col].fillna(0)
             # print(f"Filled NaN in {col} with 0.")
+    columns_to_impute_with_regression = {
+        'averageHR': ['averageSpeed', 'duration', 'calories', 'distance'],
+        'averageStressLevel': ['restingHeartRate', 'minHeartRate', 'maxHeartRate'],
+        'bodyBatteryChargedValue': ['restStressDuration', 'sleepingSeconds','avgSleepStress','remSleepSeconds','deepSleepSeconds'],
+        'totalKilocalories': ['totalSteps', 'activeSeconds', 'movingDuration', 'bmrKilocalories']
+    }
 
+    for col_to_impute, feature_cols in columns_to_impute_with_regression.items():
+        if col_to_impute in total_df.columns:
+            # Create a copy to avoid SettingWithCopyWarning
+            temp_df = df_cleaned[[col_to_impute] + feature_cols].copy()
+
+            # Drop rows where the target column is already filled with 0s
+            # This is a critical step to prevent training on zero-filled data.
+            df_train = temp_df[df_cleaned[col_to_impute] != 0].dropna()
+            df_predict = temp_df[df_cleaned[col_to_impute] == 0].dropna(subset=feature_cols)
+
+            # Check if there's enough data to train a model
+            if not df_train.empty and not df_predict.empty:
+                model = LinearRegression()
+                X_train = df_train[feature_cols]
+                y_train = df_train[col_to_impute]
+                
+                try:
+                    model.fit(X_train, y_train)
+                    predictions = model.predict(df_predict[feature_cols])
+
+                    # Fill the original DataFrame with the predictions
+                    total_df.loc[df_predict.index, col_to_impute] = predictions
+                    print(f"Successfully imputed '{col_to_impute}' using regression.")
+                except Exception as e:
+                    print(f"Failed to impute '{col_to_impute}' via regression: {e}")
+            else:
+                print(f"Skipping '{col_to_impute}': Not enough data to train/predict.")
+        else:
+            print(f"Column '{col_to_impute}' not found in DataFrame. Skipping.")
     # Impute remaining numerical columns with their median
     numerical_cols = df_cleaned.select_dtypes(include=np.number).columns
     for col in numerical_cols:
