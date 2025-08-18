@@ -605,11 +605,13 @@ def preprocessing_garmin_data(username, password, start_date, end_date):
     'stressPercentage','restStressPercentage','activityStressPercentage','uncategorizedStressPercentage','lowStressPercentage',
     'mediumStressPercentage','highStressPercentage','stressQualifier','measurableAwakeDuration','measurableAsleepDuration',
     'minAvgHeartRate','maxAvgHeartRate','bodyBatteryChargedValue', 'bodyBatteryDrainedValue',
- 'bodyBatteryHighestValue', 'bodyBatteryLowestValue', 'bodyBatteryMostRecentValue', 'bodyBatteryDuringSleep',
- 'averageMonitoringEnvironmentAltitude', 'restingCaloriesFromActivity', 'avgWakingRespirationValue', 'highestRespirationValue',
- 'lowestRespirationValue', 'ActivityStartHour', 'ActivityPerformedToday', 'activityType', 'workout_date',
- 'last_workout_date', 'daysSinceLastWorkout', 'sleepTimeHours', 'deepSleepHours', 'remSleepHours', 'lightSleepHours',
- 'awakeSleepHours', 'deepSleepPercentage', 'remSleepPercentage', 'lightSleepPercentage', 'awakeSleepPercentage'
+    'bodyBatteryHighestValue', 'bodyBatteryLowestValue', 'bodyBatteryMostRecentValue', 'bodyBatteryDuringSleep',
+    'averageMonitoringEnvironmentAltitude', 'restingCaloriesFromActivity', 'avgWakingRespirationValue', 'highestRespirationValue',
+    'lowestRespirationValue', 'ActivityStartHour', 'ActivityPerformedToday', 'activityType', 'workout_date',
+    'last_workout_date', 'daysSinceLastWorkout', 'sleepTimeHours', 'deepSleepHours', 'remSleepHours', 'lightSleepHours',
+    'awakeSleepHours', 'deepSleepPercentage', 'remSleepPercentage', 'lightSleepPercentage', 'awakeSleepPercentage',
+    'day_of_week','is_weekend','month','day_of_year'
+
  ]
     df_cleaned = df_cleaned[GARMIN_HEADERS]
     return df_cleaned
