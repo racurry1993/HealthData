@@ -1,4 +1,0 @@
-2025-08-13 13:41:42,419 - __main__ - INFO - Attempting to log in to Garmin Connect...
-2025-08-13 13:41:45,830 - __main__ - INFO - Login successful.
-2025-08-13 13:41:45,831 - __main__ - INFO - Fetching data from 2024-01-01 to 2025-08-13
-2025-08-13 13:41:46,092 - __main__ - ERROR - Error aligning columns with ActivityData worksheet: No module named 'oauth2client'
