@@ -41,18 +41,7 @@ st.set_page_config(layout="wide", page_title="Garmin Coach Dashboard (Beta)")
 def get_gs_client():
     try:
         # Reconstruct the credentials dictionary from the flattened secrets
-        creds = {
-            "type": st.secrets["gcp_service_account.type"],
-            "project_id": st.secrets["gcp_service_account.project_id"],
-            "private_key_id": st.secrets["gcp_service_account.private_key_id"],
-            "private_key": st.secrets["gcp_service_account.private_key"],
-            "client_email": st.secrets["gcp_service_account.client_email"],
-            "client_id": st.secrets["gcp_service_account.client_id"],
-            "auth_uri": st.secrets["gcp_service_account.auth_uri"],
-            "token_uri": st.secrets["gcp_service_account.token_uri"],
-            "auth_provider_x509_cert_url": st.secrets["gcp_service_account.auth_provider_x509_cert_url"],
-            "client_x509_cert_url": st.secrets["gcp_service_account.client_x509_cert_url"]
-        }
+        creds = st.secrets["gcp_service_account"]
         gc = gspread.service_account_from_dict(creds)
         return gc
     except Exception as e:
@@ -297,7 +286,7 @@ def generate_llm_insights(summary_dict, cluster_summary_text, goals_list, viewer
     """
     try:
         import google.generativeai as genai
-        gemini_api_key = st.secrets.gemini_api_key
+        gemini_api_key = "AIzaSyAiaswXxN3ngfEwMRXckBmEoZHO151jRv0"
         if not gemini_api_key:
             return "LLM key not configured. Add 'gemini_api_key' to Streamlit secrets to enable insights."
         genai.configure(api_key=gemini_api_key)
