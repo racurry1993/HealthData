@@ -39,15 +39,8 @@ st.set_page_config(layout="wide", page_title="Garmin Coach Dashboard (Beta)")
 # Cache the Google Sheets client — resource-level (long-lived)
 @st.cache_resource(show_spinner=False)
 def get_gs_client():
-    # Helpful auth validations
-    required_key = "gcp_service_account"
-    if required_key not in st.secrets:
-        raise RuntimeError(
-            "Missing Streamlit secret 'gcp_service_account'. "
-            "Add your Google Service Account JSON (as a dict) under that key."
-        )
     try:
-        #creds = st.secrets["gcp_service_account"]
+        # Reconstruct the credentials dictionary from the flattened secrets
         creds = {
             "type": st.secrets["gcp_service_account.type"],
             "project_id": st.secrets["gcp_service_account.project_id"],
