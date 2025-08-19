@@ -286,10 +286,10 @@ def generate_llm_insights(summary_dict, cluster_summary_text, goals_list, viewer
     """
     try:
         import google.generativeai as genai
-        gemini_api_key = "AIzaSyAiaswXxN3ngfEwMRXckBmEoZHO151jRv0"
-        if not gemini_api_key:
+        GEMINI_API_KEY = 'AIzaSyAiaswXxN3ngfEwMRXckBmEoZHO151jRv0'
+        if not GEMINI_API_KEY:
             return "LLM key not configured. Add 'gemini_api_key' to Streamlit secrets to enable insights."
-        genai.configure(api_key=gemini_api_key)
+        genai.configure(api_key=GEMINI_API_KEY)
         prompt_blocks = []
         prompt_blocks.append("You are a concise, data-driven coach. Provide a short titled response (one line title) and 4 short bullet points:")
         prompt_blocks.append("1) Short summary (1-2 sentences) of user's recent wearable trends.")
