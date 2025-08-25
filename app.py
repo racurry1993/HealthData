@@ -420,7 +420,8 @@ def show_overview_page(user):
                 title=f'Average {selected_metric_heatmap} Heatmap by Day of Week and Month'
             )
             # Ensure proper month ordering on y-axis for Plotly by making it a discrete axis with sorted categories
-            fig_heatmap.update_yaxes(categoryorder='category ascending')
+            # Explicitly set `type='category'` for the y-axis to ensure discrete treatment.
+            fig_heatmap.update_yaxes(type='category', categoryorder='category ascending')
             st.plotly_chart(fig_heatmap, use_container_width=True)
     else:
         st.info("No data available for heatmap metrics (totalSteps, restingHeartRate, deepSleepHours).")
@@ -502,8 +503,7 @@ def show_overview_page(user):
             st.subheader("Sleep Patterns Relative to Activity Days vs. Overall Average")
             activity_dates = df_sleep_activity_filtered[df_sleep_activity_filtered['ActivityPerformedToday'] == True]['Date'].unique()
             
-            # Calculate overall averages
-            # Ensure overall averages are calculated from the *filtered* data
+            # Calculate overall averages - MUST be from the filtered data
             overall_avg_deep_sleep = df_sleep_activity_filtered['deepSleepHours'].mean()
             overall_avg_total_sleep = df_sleep_activity_filtered['sleepTimeHours'].mean()
 
@@ -526,12 +526,11 @@ def show_overview_page(user):
                     day_label = "Day Of Activity + 2"
                 else: # date_offset >= 3
                     for adate in activity_dates:
-                        for i in range(3, 8): # consider up to 7 days after activity
+                        for i in range(3, 8): # consider up to 7 days after activity to give a broader ">=3" category
                             temp_dates.add(pd.to_datetime(adate) + timedelta(days=i))
                     day_label = "Day Of Activity >= 3"
                 
                 # Filter sleep data for these temp_dates
-                # Ensure the Date column is treated consistently for comparison
                 temp_df = df_sleep_activity_filtered[df_sleep_activity_filtered['Date'].isin(list(temp_dates))].copy()
                 
                 if not temp_df.empty:
@@ -551,40 +550,70 @@ def show_overview_page(user):
                 df_sleep_correlation['Day Category'] = pd.Categorical(df_sleep_correlation['Day Category'], categories=day_category_order, ordered=True)
                 df_sleep_correlation = df_sleep_correlation.sort_values('Day Category')
 
-                fig_sleep_correlation = go.Figure()
+                # --- Chart 1: Average Deep Sleep Hours Relative to Activity Days ---
+                fig_deep_sleep_correlation = go.Figure()
 
-                # Add Deep Sleep bars
-                fig_sleep_correlation.add_trace(go.Bar(
+                min_deep_sleep = df_sleep_correlation['Average Deep Sleep Hours'].min()
+                max_deep_sleep = df_sleep_correlation['Average Deep Sleep Hours'].max()
+                # Include overall average in min/max calculation
+                plot_min_deep = min(min_deep_sleep, overall_avg_deep_sleep if not math.isnan(overall_avg_deep_sleep) else min_deep_sleep)
+                plot_max_deep = max(max_deep_sleep, overall_avg_deep_sleep if not math.isnan(overall_avg_deep_sleep) else max_deep_sleep)
+                
+                y_range_deep = [plot_min_deep * 0.95, plot_max_deep * 1.05] if plot_min_deep < plot_max_deep else [plot_min_deep * 0.9, plot_max_deep * 1.1 + 0.5]
+
+
+                fig_deep_sleep_correlation.add_trace(go.Bar(
                     x=df_sleep_correlation['Day Category'],
                     y=df_sleep_correlation['Average Deep Sleep Hours'],
                     name='Avg Deep Sleep',
                     marker_color=['green' if val > overall_avg_deep_sleep else 'red' for val in df_sleep_correlation['Average Deep Sleep Hours']],
                     opacity=0.7,
-                    text=[f'{val:.1f}' for val in df_sleep_correlation['Average Deep Sleep Hours']], # Display value on bar
-                    textposition='outside'
-                ))
-                # Add Total Sleep bars
-                fig_sleep_correlation.add_trace(go.Bar(
-                    x=df_sleep_correlation['Day Category'],
-                    y=df_sleep_correlation['Average Total Sleep Hours'],
-                    name='Avg Total Sleep',
-                    marker_color=['blue' if val > overall_avg_total_sleep else 'orange' for val in df_sleep_correlation['Average Total Sleep Hours']],
-                    opacity=0.7,
-                    text=[f'{val:.1f}' for val in df_sleep_correlation['Average Total Sleep Hours']], # Display value on bar
+                    text=[f'{val:.1f}' for val in df_sleep_correlation['Average Deep Sleep Hours']],
                     textposition='outside'
                 ))
 
-                # Add overall average lines
                 if not math.isnan(overall_avg_deep_sleep):
-                    fig_sleep_correlation.add_hline(
+                    fig_deep_sleep_correlation.add_hline(
                         y=overall_avg_deep_sleep, 
                         line_dash="dash", 
                         line_color="darkgreen",
                         annotation_text=f"Overall Avg Deep Sleep: {overall_avg_deep_sleep:.1f} hrs",
                         annotation_position="bottom right"
                     )
+
+                fig_deep_sleep_correlation.update_layout(
+                    title='Average Deep Sleep Hours Relative to Activity Days vs. Overall Average',
+                    xaxis_title='Day Category',
+                    yaxis_title='Hours',
+                    yaxis_range=y_range_deep, # Set dynamic y-axis range
+                    hovermode="x unified"
+                )
+                st.plotly_chart(fig_deep_sleep_correlation, use_container_width=True)
+
+                # --- Chart 2: Average Total Sleep Hours Relative to Activity Days ---
+                fig_total_sleep_correlation = go.Figure()
+
+                min_total_sleep = df_sleep_correlation['Average Total Sleep Hours'].min()
+                max_total_sleep = df_sleep_correlation['Average Total Sleep Hours'].max()
+                # Include overall average in min/max calculation
+                plot_min_total = min(min_total_sleep, overall_avg_total_sleep if not math.isnan(overall_avg_total_sleep) else min_total_sleep)
+                plot_max_total = max(max_total_sleep, overall_avg_total_sleep if not math.isnan(overall_avg_total_sleep) else max_total_sleep)
+
+                y_range_total = [plot_min_total * 0.95, plot_max_total * 1.05] if plot_min_total < plot_max_total else [plot_min_total * 0.9, plot_max_total * 1.1 + 0.5]
+
+
+                fig_total_sleep_correlation.add_trace(go.Bar(
+                    x=df_sleep_correlation['Day Category'],
+                    y=df_sleep_correlation['Average Total Sleep Hours'],
+                    name='Avg Total Sleep',
+                    marker_color=['blue' if val > overall_avg_total_sleep else 'orange' for val in df_sleep_correlation['Average Total Sleep Hours']],
+                    opacity=0.7,
+                    text=[f'{val:.1f}' for val in df_sleep_correlation['Average Total Sleep Hours']],
+                    textposition='outside'
+                ))
+
                 if not math.isnan(overall_avg_total_sleep):
-                    fig_sleep_correlation.add_hline(
+                    fig_total_sleep_correlation.add_hline(
                         y=overall_avg_total_sleep, 
                         line_dash="dash", 
                         line_color="darkblue",
@@ -592,14 +621,14 @@ def show_overview_page(user):
                         annotation_position="top right"
                     )
 
-                fig_sleep_correlation.update_layout(
-                    title='Average Sleep Metrics Relative to Activity Days vs. Overall Average',
+                fig_total_sleep_correlation.update_layout(
+                    title='Average Total Sleep Hours Relative to Activity Days vs. Overall Average',
                     xaxis_title='Day Category',
                     yaxis_title='Hours',
-                    barmode='group',
+                    yaxis_range=y_range_total, # Set dynamic y-axis range
                     hovermode="x unified"
                 )
-                st.plotly_chart(fig_sleep_correlation, use_container_width=True)
+                st.plotly_chart(fig_total_sleep_correlation, use_container_width=True)
 
                 st.caption("Bars above the dashed line indicate 'beating the average' for that sleep metric on that day relative to activity. Green/Blue bars are above overall average, Red/Orange bars are below. Your hypothesis suggests 'Day Of Activity + 1' might show the best sleep.")
 
@@ -689,7 +718,7 @@ def show_insights_page(user):
             if metric_col and metric_col in df.columns:
                 hist = df[['Date', metric_col]].dropna().sort_values('Date')
                 if hist.empty:
-                    st.info("No historical values for this metric.")
+                    st.info(f"No historical values for metric '{metric_col}' for goal '{g['goal_type']}'.")
                     continue
                 
                 forecast_val, model = forecast_metric_on_date(hist, metric_col, g['target_date'])
@@ -697,22 +726,26 @@ def show_insights_page(user):
                 last_val = hist[metric_col].iloc[-1]
                 target_dt = pd.to_datetime(g['target_date'])
                 
-                # Only plot forecast if we have valid last_val and forecast_val, and target date is not in the past
-                if forecast_val is not None and not math.isnan(last_val) and target_dt >= last_date:
+                # Check for valid forecast values and dates before plotting
+                if (forecast_val is not None and 
+                    not math.isnan(forecast_val) and 
+                    not math.isnan(last_val) and 
+                    target_dt >= last_date):
+                    
                     fig = go.Figure()
                     fig.add_trace(go.Scatter(x=hist['Date'], y=hist[metric_col], mode='lines+markers', name='Historical Data'))
                     
-                    # Add forecast line starting from the last historical point to the forecast target date
-                    # Ensure the forecast line starts from the *end* of the historical data, not necessarily the day after.
-                    # We connect the last historical point directly to the forecast point.
+                    # Add forecast line from last historical point to forecast target date
                     fig.add_trace(go.Scatter(x=[last_date, target_dt], y=[last_val, forecast_val], mode='lines+markers', name='Forecast',
-                                             line=dict(color='red', dash='dash'))) # Corrected: removed repeated 'dash' keyword
+                                             line=dict(color='red', dash='dash'))) 
                     
                     fig.add_hline(y=float(g['target_value']), line_dash='dash', annotation_text='Target', annotation_position='top left')
                     fig.update_layout(title=f"Forecast vs Target for {g['goal_type']}")
                     st.plotly_chart(fig, use_container_width=True)
                 else:
-                    st.info(f"No sufficient data or invalid forecast to plot for goal '{g['goal_type']}'. Forecast value: {forecast_val}, Last historical value: {last_val}, Target date: {target_dt}, Last historical date: {last_date}")
+                    st.info(f"No sufficient data or invalid forecast to plot for goal '{g['goal_type']}'. "
+                            f"Details: Forecast value: {forecast_val}, Last historical value: {last_val}, "
+                            f"Target date: {target_dt.isoformat()} (>= Last historical date: {last_date.isoformat()})")
             else:
                 st.info(f"No data mapped for goal type {g['goal_type']}.")
     # Rolling trends
