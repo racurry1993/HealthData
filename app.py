@@ -382,7 +382,7 @@ def show_overview_page(user):
     if any(col in df.columns for col in heatmap_data_cols):
         df_heatmap = df.copy()
         df_heatmap['DayOfWeek'] = df_heatmap['Date'].dt.day_name()
-        # Changed Y-axis to Month
+        # Changed Y-axis to Month and ensure it's treated as categorical
         df_heatmap['Month'] = df_heatmap['Date'].dt.strftime('%Y-%m') # Format as YYYY-MM for chronological sorting
 
         selected_metric_heatmap = st.selectbox(
@@ -392,18 +392,21 @@ def show_overview_page(user):
         )
 
         if selected_metric_heatmap:
-            # Aggregate daily to handle multiple entries per day if preprocessing creates them
-            # Group by Month and DayOfWeek to get average for each combination
+            # Aggregate daily to get average for each Month/DayOfWeek combination
             daily_agg = df_heatmap.groupby(['Month', 'DayOfWeek'])[selected_metric_heatmap].mean().reset_index()
+            
             # Order days of week for consistent heatmap display
             day_order = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
             daily_agg['DayOfWeek'] = pd.Categorical(daily_agg['DayOfWeek'], categories=day_order, ordered=True)
-            daily_agg = daily_agg.sort_values(['Month', 'DayOfWeek']) # Sort by Month then DayOfWeek
+            
+            # Ensure Month is treated as a categorical for proper display
+            # Plotly Express will usually handle strings like 'YYYY-MM' as discrete, but explicit sort helps.
+            daily_agg = daily_agg.sort_values(['Month', 'DayOfWeek'])
 
             fig_heatmap = px.density_heatmap(
                 daily_agg,
                 x="DayOfWeek",
-                y="Month", # Changed to Month
+                y="Month", 
                 z=selected_metric_heatmap,
                 color_continuous_scale="Viridis",
                 title=f'Average {selected_metric_heatmap} Heatmap by Day of Week and Month'
@@ -439,50 +442,42 @@ def show_overview_page(user):
                 (df_sleep_activity['restingHeartRate'] <= selected_hr_range[1])
             ].copy()
         else:
-            st.info("Insufficient data for Resting Heart Rate filtering.")
+            st.info("Insufficient data for Resting Heart Rate filtering. Displaying charts with all available data (no HR filter applied).")
             df_sleep_activity_filtered = df_sleep_activity.copy() # Use full data if HR data is bad
-            selected_hr_range = (0.0, 100.0) # Default range for display consistency
+            selected_hr_range = (0.0, 100.0) # Default range for display consistency, though not actively filtering
 
         if not df_sleep_activity_filtered.empty:
             
-            # --- Plot deepSleepHours and sleepTimeHours by ActivityPerformedToday ---
-            avg_sleep_by_activity = df_sleep_activity_filtered.groupby('ActivityPerformedToday')[['deepSleepHours', 'sleepTimeHours']].mean().reset_index()
-            avg_sleep_by_activity['ActivityPerformedToday'] = avg_sleep_by_activity['ActivityPerformedToday'].map({True: 'Activity Performed', False: 'No Activity'})
-
-            fig_sleep_activity = px.bar(
-                avg_sleep_by_activity,
-                x='ActivityPerformedToday',
-                y=['deepSleepHours', 'sleepTimeHours'],
-                barmode='group',
-                title='Average Deep Sleep and Total Sleep Hours by Activity'
-            )
-            st.plotly_chart(fig_sleep_activity, use_container_width=True)
+            # --- Removed: Plot deepSleepHours and sleepTimeHours by ActivityPerformedToday ---
+            # This chart was removed as per user request.
 
             # --- Statistical Evidence: Pearson Correlation ---
             st.subheader("Statistical Correlation Evidence")
             # Convert ActivityPerformedToday to numeric for correlation calculation (True=1, False=0)
             df_sleep_activity_filtered['ActivityNum'] = df_sleep_activity_filtered['ActivityPerformedToday'].astype(int)
 
-            if not df_sleep_activity_filtered['ActivityNum'].isnull().all() and \
-               not df_sleep_activity_filtered['deepSleepHours'].isnull().all() and \
-               not df_sleep_activity_filtered['sleepTimeHours'].isnull().all():
+            # Drop rows with NaN in relevant columns for correlation calculation
+            df_corr = df_sleep_activity_filtered[['ActivityNum', 'deepSleepHours', 'sleepTimeHours']].dropna()
+
+            if not df_corr.empty and df_corr['ActivityNum'].nunique() > 1 and \
+               df_corr['deepSleepHours'].count() > 1 and df_corr['sleepTimeHours'].count() > 1:
                 
-                corr_deep_sleep = df_sleep_activity_filtered['ActivityNum'].corr(df_sleep_activity_filtered['deepSleepHours'])
-                corr_total_sleep = df_sleep_activity_filtered['ActivityNum'].corr(df_sleep_activity_filtered['sleepTimeHours'])
+                corr_deep_sleep = df_corr['ActivityNum'].corr(df_corr['deepSleepHours'])
+                corr_total_sleep = df_corr['ActivityNum'].corr(df_corr['sleepTimeHours'])
 
                 if not math.isnan(corr_deep_sleep):
                     st.markdown(f"**Pearson Correlation (Activity vs. Deep Sleep Hours):** `{corr_deep_sleep:.2f}`")
                 else:
-                    st.info("Not enough data to compute correlation for Activity vs. Deep Sleep Hours.")
+                    st.info("Not enough valid, varied data to compute correlation for Activity vs. Deep Sleep Hours.")
 
                 if not math.isnan(corr_total_sleep):
                     st.markdown(f"**Pearson Correlation (Activity vs. Total Sleep Hours):** `{corr_total_sleep:.2f}`")
                 else:
-                     st.info("Not enough data to compute correlation for Activity vs. Total Sleep Hours.")
+                     st.info("Not enough valid, varied data to compute correlation for Activity vs. Total Sleep Hours.")
                 
                 st.caption("A correlation coefficient near `1` indicates a strong positive linear relationship, near `-1` a strong negative linear relationship, and near `0` indicates no linear relationship. This helps quantify the link between activity and sleep.")
             else:
-                st.info("Not enough valid data to compute Pearson correlation coefficients.")
+                st.info("Not enough valid data (e.g., insufficient variance or data points after filtering) to compute Pearson correlation coefficients.")
             
             # --- Plot sleep metrics relative to activity days ---
             activity_dates = df_sleep_activity_filtered[df_sleep_activity_filtered['ActivityPerformedToday'] == True]['Date'].unique()
@@ -508,7 +503,7 @@ def show_overview_page(user):
                     day_label = "Day Of Activity + 2"
                 else: # date_offset >= 3
                     # Day >= 3
-                    # For "Day >= 3", we need to collect all dates that are 3 or more days after any activity,
+                    # For "Day >= 3", collect all dates that are 3 or more days after any activity,
                     # but only consider each unique calendar day once.
                     all_future_dates = set()
                     for adate in activity_dates:
@@ -633,26 +628,20 @@ def show_insights_page(user):
                 if hist.empty:
                     st.info("No historical values for this metric.")
                     continue
+                
                 forecast_val, model = forecast_metric_on_date(hist, metric_col, g['target_date'])
                 last_date = hist['Date'].max()
                 last_val = hist[metric_col].iloc[-1]
                 target_dt = pd.to_datetime(g['target_date'])
-                # Generate dates for the forecast line starting from the last historical date up to the target date
-                proj_dates = pd.date_range(start=last_date + timedelta(days=1), end=target_dt, freq='D')
-                if not proj_dates.empty:
-                    # To display the forecast in the chart, we need a series of predicted values.
-                    # For simplicity, we can linearly interpolate from the last known value to the forecast_val.
-                    # For a more robust forecast plot, a time series model would predict each point.
-                    # Since forecast_metric_on_date gives a single target date forecast,
-                    # we'll create a simple projection from the last actual value to the forecast.
-                    
-                    # Combine historical and forecast for plotting
-                    combined_dates = pd.to_datetime(hist['Date'].tolist() + [target_dt])
-                    combined_values = hist[metric_col].tolist() + [forecast_val]
-
+                
+                # Only plot forecast if we have valid last_val and forecast_val, and target date is not in the past
+                if forecast_val is not None and not math.isnan(last_val) and target_dt >= last_date:
                     fig = go.Figure()
                     fig.add_trace(go.Scatter(x=hist['Date'], y=hist[metric_col], mode='lines+markers', name='Historical Data'))
-                    # Add forecast line starting from the last historical point
+                    
+                    # Add forecast line starting from the last historical point to the forecast target date
+                    # Ensure the forecast line starts from the *end* of the historical data, not necessarily the day after.
+                    # We connect the last historical point directly to the forecast point.
                     fig.add_trace(go.Scatter(x=[last_date, target_dt], y=[last_val, forecast_val], mode='lines', name='Forecast',
                                              line=dict(dash='dash', color='red')))
                     
@@ -660,7 +649,7 @@ def show_insights_page(user):
                     fig.update_layout(title=f"Forecast vs Target for {g['goal_type']}")
                     st.plotly_chart(fig, use_container_width=True)
                 else:
-                    st.info("No future dates to plot the forecast or historical data insufficient for projection.")
+                    st.info("No sufficient data or invalid forecast to plot for this goal.")
             else:
                 st.info(f"No data mapped for goal type {g['goal_type']}.")
     # Rolling trends
