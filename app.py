@@ -346,7 +346,7 @@ def login_panel():
     return None
     
     # After login, the login form will disappear and the fetch data button will appear
-    if st.session_state.logged_in:
+    if 'logged_in' in st.session_state and st.session_state.logged_in:
         st.sidebar.button("Fetch Data")
         # Add your fetch data logic here
 
@@ -414,11 +414,13 @@ def show_overview_page(user):
             fig_heatmap = px.density_heatmap(
                 daily_agg,
                 x="DayOfWeek",
-                y="Month", 
+                y="Month", # This will ensure each 'YYYY-MM' is a distinct row
                 z=selected_metric_heatmap,
                 color_continuous_scale="Viridis",
                 title=f'Average {selected_metric_heatmap} Heatmap by Day of Week and Month'
             )
+            # Ensure proper month ordering on y-axis for Plotly by making it a discrete axis with sorted categories
+            fig_heatmap.update_yaxes(categoryorder='category ascending')
             st.plotly_chart(fig_heatmap, use_container_width=True)
     else:
         st.info("No data available for heatmap metrics (totalSteps, restingHeartRate, deepSleepHours).")
@@ -461,40 +463,47 @@ def show_overview_page(user):
             # Drop rows with NaN in relevant columns for correlation calculation
             df_corr = df_sleep_activity_filtered[['ActivityNum', 'deepSleepHours', 'sleepTimeHours']].dropna()
 
-            # Check for sufficient variance for correlation calculation
+            # Check for sufficient data points and variance for correlation calculation
+            min_data_points = 2 # At least 2 points are needed for correlation
+            
+            has_activity_data = df_corr['ActivityNum'].count() >= min_data_points
             has_activity_variance = df_corr['ActivityNum'].nunique() > 1
-            has_deep_sleep_variance = df_corr['deepSleepHours'].count() > 1 and df_corr['deepSleepHours'].nunique() > 1
-            has_total_sleep_variance = df_corr['sleepTimeHours'].count() > 1 and df_corr['sleepTimeHours'].nunique() > 1
 
+            has_deep_sleep_data = df_corr['deepSleepHours'].count() >= min_data_points
+            has_deep_sleep_variance = df_corr['deepSleepHours'].nunique() > 1
 
-            if not df_corr.empty and has_activity_variance:
-                if has_deep_sleep_variance:
+            has_total_sleep_data = df_corr['sleepTimeHours'].count() >= min_data_points
+            has_total_sleep_variance = df_corr['sleepTimeHours'].nunique() > 1
+
+            if not df_corr.empty and has_activity_data and has_activity_variance:
+                if has_deep_sleep_data and has_deep_sleep_variance:
                     corr_deep_sleep = df_corr['ActivityNum'].corr(df_corr['deepSleepHours'])
                     if not math.isnan(corr_deep_sleep):
                         st.markdown(f"**Pearson Correlation (Activity vs. Deep Sleep Hours):** `{corr_deep_sleep:.2f}`")
                     else:
-                        st.info("Not enough valid, varied data to compute correlation for Activity vs. Deep Sleep Hours.")
+                        st.info("Not enough valid, varied data to compute correlation for Activity vs. Deep Sleep Hours (might be due to filtering or uniform data).")
                 else:
-                    st.info("Not enough variance in Deep Sleep Hours data to compute correlation.")
+                    st.info("Not enough valid data or variance in Deep Sleep Hours data to compute correlation.")
 
-                if has_total_sleep_variance:
+                if has_total_sleep_data and has_total_sleep_variance:
                     corr_total_sleep = df_corr['ActivityNum'].corr(df_corr['sleepTimeHours'])
                     if not math.isnan(corr_total_sleep):
                         st.markdown(f"**Pearson Correlation (Activity vs. Total Sleep Hours):** `{corr_total_sleep:.2f}`")
                     else:
-                         st.info("Not enough valid, varied data to compute correlation for Activity vs. Total Sleep Hours.")
+                         st.info("Not enough valid, varied data to compute correlation for Activity vs. Total Sleep Hours (might be due to filtering or uniform data).")
                 else:
-                    st.info("Not enough variance in Total Sleep Hours data to compute correlation.")
+                    st.info("Not enough valid data or variance in Total Sleep Hours data to compute correlation.")
                 
                 st.caption("A correlation coefficient near `1` indicates a strong positive linear relationship, near `-1` a strong negative linear relationship, and near `0` indicates no linear relationship. This helps quantify the link between activity and sleep.")
             else:
-                st.info("Not enough valid data (e.g., insufficient variance in activity or sleep data after filtering) to compute Pearson correlation coefficients.")
+                st.info("Not enough valid data (e.g., insufficient variance in activity or too few data points after filtering) to compute Pearson correlation coefficients.")
             
             # --- Plot sleep metrics relative to activity days ---
             st.subheader("Sleep Patterns Relative to Activity Days vs. Overall Average")
             activity_dates = df_sleep_activity_filtered[df_sleep_activity_filtered['ActivityPerformedToday'] == True]['Date'].unique()
             
             # Calculate overall averages
+            # Ensure overall averages are calculated from the *filtered* data
             overall_avg_deep_sleep = df_sleep_activity_filtered['deepSleepHours'].mean()
             overall_avg_total_sleep = df_sleep_activity_filtered['sleepTimeHours'].mean()
 
@@ -502,28 +511,29 @@ def show_overview_page(user):
             sleep_analysis_data = []
 
             for date_offset in range(4): # Day 0 (activity), Day +1, Day +2, Day >=3
-                temp_dates = []
+                temp_dates = set() # Use a set to store unique dates to avoid duplicates
                 if date_offset == 0:
-                    temp_dates = activity_dates
+                    for adate in activity_dates:
+                        temp_dates.add(pd.to_datetime(adate))
                     day_label = "Day Of Activity"
                 elif date_offset == 1:
                     for adate in activity_dates:
-                        temp_dates.append(pd.to_datetime(adate) + timedelta(days=1))
+                        temp_dates.add(pd.to_datetime(adate) + timedelta(days=1))
                     day_label = "Day Of Activity + 1"
                 elif date_offset == 2:
                     for adate in activity_dates:
-                        temp_dates.append(pd.to_datetime(adate) + timedelta(days=2))
+                        temp_dates.add(pd.to_datetime(adate) + timedelta(days=2))
                     day_label = "Day Of Activity + 2"
                 else: # date_offset >= 3
-                    all_future_dates = set()
                     for adate in activity_dates:
-                        for i in range(3, 8): 
-                            all_future_dates.add(pd.to_datetime(adate) + timedelta(days=i))
-                    temp_dates = list(all_future_dates)
+                        for i in range(3, 8): # consider up to 7 days after activity
+                            temp_dates.add(pd.to_datetime(adate) + timedelta(days=i))
                     day_label = "Day Of Activity >= 3"
                 
                 # Filter sleep data for these temp_dates
-                temp_df = df_sleep_activity_filtered[df_sleep_activity_filtered['Date'].isin(pd.to_datetime(temp_dates))].copy()
+                # Ensure the Date column is treated consistently for comparison
+                temp_df = df_sleep_activity_filtered[df_sleep_activity_filtered['Date'].isin(list(temp_dates))].copy()
+                
                 if not temp_df.empty:
                     avg_deep_sleep = temp_df['deepSleepHours'].mean()
                     avg_total_sleep = temp_df['sleepTimeHours'].mean()
@@ -549,7 +559,9 @@ def show_overview_page(user):
                     y=df_sleep_correlation['Average Deep Sleep Hours'],
                     name='Avg Deep Sleep',
                     marker_color=['green' if val > overall_avg_deep_sleep else 'red' for val in df_sleep_correlation['Average Deep Sleep Hours']],
-                    opacity=0.7
+                    opacity=0.7,
+                    text=[f'{val:.1f}' for val in df_sleep_correlation['Average Deep Sleep Hours']], # Display value on bar
+                    textposition='outside'
                 ))
                 # Add Total Sleep bars
                 fig_sleep_correlation.add_trace(go.Bar(
@@ -557,7 +569,9 @@ def show_overview_page(user):
                     y=df_sleep_correlation['Average Total Sleep Hours'],
                     name='Avg Total Sleep',
                     marker_color=['blue' if val > overall_avg_total_sleep else 'orange' for val in df_sleep_correlation['Average Total Sleep Hours']],
-                    opacity=0.7
+                    opacity=0.7,
+                    text=[f'{val:.1f}' for val in df_sleep_correlation['Average Total Sleep Hours']], # Display value on bar
+                    textposition='outside'
                 ))
 
                 # Add overall average lines
@@ -582,11 +596,12 @@ def show_overview_page(user):
                     title='Average Sleep Metrics Relative to Activity Days vs. Overall Average',
                     xaxis_title='Day Category',
                     yaxis_title='Hours',
-                    barmode='group'
+                    barmode='group',
+                    hovermode="x unified"
                 )
                 st.plotly_chart(fig_sleep_correlation, use_container_width=True)
 
-                st.caption("Bars above the dashed line indicate 'beating the average' for that sleep metric on that day relative to activity. Green/Blue bars are above overall average, Red/Orange bars are below.")
+                st.caption("Bars above the dashed line indicate 'beating the average' for that sleep metric on that day relative to activity. Green/Blue bars are above overall average, Red/Orange bars are below. Your hypothesis suggests 'Day Of Activity + 1' might show the best sleep.")
 
             else:
                 st.info(f"Not enough data to show sleep correlation with activity for the selected heart rate range ({selected_hr_range[0]} - {selected_hr_range[1]}).")
@@ -691,13 +706,13 @@ def show_insights_page(user):
                     # Ensure the forecast line starts from the *end* of the historical data, not necessarily the day after.
                     # We connect the last historical point directly to the forecast point.
                     fig.add_trace(go.Scatter(x=[last_date, target_dt], y=[last_val, forecast_val], mode='lines+markers', name='Forecast',
-                                             line=dict(dash='dash', color='red', dash='dash'))) # Added marker for the forecast point
+                                             line=dict(color='red', dash='dash'))) # Corrected: removed repeated 'dash' keyword
                     
                     fig.add_hline(y=float(g['target_value']), line_dash='dash', annotation_text='Target', annotation_position='top left')
                     fig.update_layout(title=f"Forecast vs Target for {g['goal_type']}")
                     st.plotly_chart(fig, use_container_width=True)
                 else:
-                    st.info("No sufficient data or invalid forecast to plot for this goal.")
+                    st.info(f"No sufficient data or invalid forecast to plot for goal '{g['goal_type']}'. Forecast value: {forecast_val}, Last historical value: {last_val}, Target date: {target_dt}, Last historical date: {last_date}")
             else:
                 st.info(f"No data mapped for goal type {g['goal_type']}.")
     # Rolling trends
