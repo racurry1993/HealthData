@@ -269,6 +269,7 @@ def map_goal_type_to_column(goal_type_str):
         "deep sleep %": "deepSleepPercentage",
         "deep sleep percentage": "deepSleepPercentage",
         "body battery": "bodyBatteryMostRecentValue",
+        "deep sleephours": "deepSleepHours", # Added for the new heatmap request
         # add more mappings as needed
     }
     return mapping.get(s, None)
@@ -350,18 +351,162 @@ def show_overview_page(user):
     if df.empty:
         st.info("No synced activity data found. Use 'Fetch Data' in the left sidebar to pull from Garmin.")
         return
+
+    # Convert relevant columns to numeric, coercing errors
+    for col in ['totalSteps', 'restingHeartRate', 'deepSleepHours', 'sleepTimeHours']:
+        if col in df.columns:
+            df[col] = pd.to_numeric(df[col], errors='coerce')
+
     # KPIs
     kpi_cols = []
     if 'totalSteps' in df.columns:
-        kpi_cols.append(("Avg Daily Steps", pd.to_numeric(df['totalSteps'], errors='coerce').mean()))
+        kpi_cols.append(("Avg Daily Steps", df['totalSteps'].mean()))
     if 'restingHeartRate' in df.columns:
-        kpi_cols.append(("Avg Resting HR", pd.to_numeric(df['restingHeartRate'], errors='coerce').mean()))
+        kpi_cols.append(("Avg Resting HR", df['restingHeartRate'].mean()))
     if 'sleepTimeHours' in df.columns:
-        kpi_cols.append(("Avg Sleep (hrs)", pd.to_numeric(df['sleepTimeHours'], errors='coerce').mean()))
+        kpi_cols.append(("Avg Sleep (hrs)", df['sleepTimeHours'].mean()))
     cols = st.columns(len(kpi_cols) if kpi_cols else 1)
     for i, (label, val) in enumerate(kpi_cols):
         with cols[i]:
             st.metric(label=label, value=f"{val:.1f}" if not math.isnan(val) else "N/A")
+
+    st.markdown("---")
+    st.subheader("Daily Activity Heatmap")
+
+    heatmap_data_cols = ['totalSteps', 'restingHeartRate', 'deepSleepHours']
+    if any(col in df.columns for col in heatmap_data_cols):
+        df_heatmap = df.copy()
+        df_heatmap['DayOfWeek'] = df_heatmap['Date'].dt.day_name()
+        df_heatmap['Week'] = df_heatmap['Date'].dt.isocalendar().week.astype(str)
+
+        selected_metric_heatmap = st.selectbox(
+            "Select metric for heatmap",
+            [col for col in heatmap_data_cols if col in df_heatmap.columns]
+        )
+
+        if selected_metric_heatmap:
+            # Aggregate daily to handle multiple entries per day if preprocessing creates them
+            daily_agg = df_heatmap.groupby(['Date', 'DayOfWeek', 'Week'])[selected_metric_heatmap].mean().reset_index()
+            # Order days of week
+            day_order = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
+            daily_agg['DayOfWeek'] = pd.Categorical(daily_agg['DayOfWeek'], categories=day_order, ordered=True)
+            daily_agg = daily_agg.sort_values(['Week', 'DayOfWeek'])
+
+            fig_heatmap = px.heatmap(
+                daily_agg,
+                x="DayOfWeek",
+                y="Week",
+                z=selected_metric_heatmap,
+                color_continuous_scale="Viridis",
+                title=f'{selected_metric_heatmap} Heatmap by Day of Week and Week'
+            )
+            st.plotly_chart(fig_heatmap, use_container_width=True)
+    else:
+        st.info("No data available for heatmap metrics (totalSteps, restingHeartRate, deepSleepHours).")
+    
+    st.markdown("---")
+    st.subheader("Activity and Sleep Correlation")
+
+    if all(c in df.columns for c in ['ActivityPerformedToday', 'deepSleepHours', 'sleepTimeHours', 'Date', 'restingHeartRate']):
+        df_sleep_activity = df.copy()
+        df_sleep_activity['Date'] = pd.to_datetime(df_sleep_activity['Date'])
+        
+        # Ensure 'ActivityPerformedToday' is boolean
+        df_sleep_activity['ActivityPerformedToday'] = df_sleep_activity['ActivityPerformedToday'].astype(bool)
+
+        # Filter by restingHeartRate
+        hr_min = df_sleep_activity['restingHeartRate'].min()
+        hr_max = df_sleep_activity['restingHeartRate'].max()
+        selected_hr_range = st.slider(
+            "Filter by Resting Heart Rate",
+            min_value=float(hr_min) if not math.isnan(hr_min) else 0.0,
+            max_value=float(hr_max) if not math.isnan(hr_max) else 100.0,
+            value=(float(hr_min) if not math.isnan(hr_min) else 0.0, float(hr_max) if not math.isnan(hr_max) else 100.0)
+        )
+        df_sleep_activity_filtered = df_sleep_activity[
+            (df_sleep_activity['restingHeartRate'] >= selected_hr_range[0]) &
+            (df_sleep_activity['restingHeartRate'] <= selected_hr_range[1])
+        ].copy()
+
+        if not df_sleep_activity_filtered.empty:
+            
+            # --- Plot deepSleepHours and sleepTimeHours by ActivityPerformedToday ---
+            avg_sleep_by_activity = df_sleep_activity_filtered.groupby('ActivityPerformedToday')[['deepSleepHours', 'sleepTimeHours']].mean().reset_index()
+            avg_sleep_by_activity['ActivityPerformedToday'] = avg_sleep_by_activity['ActivityPerformedToday'].map({True: 'Activity Performed', False: 'No Activity'})
+
+            fig_sleep_activity = px.bar(
+                avg_sleep_by_activity,
+                x='ActivityPerformedToday',
+                y=['deepSleepHours', 'sleepTimeHours'],
+                barmode='group',
+                title='Average Deep Sleep and Total Sleep Hours by Activity'
+            )
+            st.plotly_chart(fig_sleep_activity, use_container_width=True)
+
+            # --- Plot sleep metrics relative to activity days ---
+            activity_dates = df_sleep_activity_filtered[df_sleep_activity_filtered['ActivityPerformedToday'] == True]['Date'].unique()
+            
+            # Create a list to store data for plotting
+            sleep_analysis_data = []
+
+            for date_offset in range(4): # Day 0 (activity), Day +1, Day +2, Day >=3
+                temp_dates = []
+                if date_offset == 0:
+                    # Day of activity
+                    temp_dates = activity_dates
+                    day_label = "Day Of Activity"
+                elif date_offset == 1:
+                    # Day + 1
+                    for adate in activity_dates:
+                        temp_dates.append(pd.to_datetime(adate) + timedelta(days=1))
+                    day_label = "Day Of Activity + 1"
+                elif date_offset == 2:
+                    # Day + 2
+                    for adate in activity_dates:
+                        temp_dates.append(pd.to_datetime(adate) + timedelta(days=2))
+                    day_label = "Day Of Activity + 2"
+                else: # date_offset >= 3
+                    # Day >= 3
+                    for adate in activity_dates:
+                        for i in range(3, 8): # consider up to 7 days after activity
+                            temp_dates.append(pd.to_datetime(adate) + timedelta(days=i))
+                    day_label = "Day Of Activity >= 3"
+                
+                # Filter sleep data for these temp_dates
+                temp_df = df_sleep_activity_filtered[df_sleep_activity_filtered['Date'].isin(temp_dates)].copy()
+                if not temp_df.empty:
+                    avg_deep_sleep = temp_df['deepSleepHours'].mean()
+                    avg_total_sleep = temp_df['sleepTimeHours'].mean()
+                    sleep_analysis_data.append({
+                        'Day Category': day_label,
+                        'Average Deep Sleep Hours': avg_deep_sleep,
+                        'Average Total Sleep Hours': avg_total_sleep
+                    })
+            
+            if sleep_analysis_data:
+                df_sleep_correlation = pd.DataFrame(sleep_analysis_data)
+                
+                # Order for plotting
+                day_category_order = ["Day Of Activity", "Day Of Activity + 1", "Day Of Activity + 2", "Day Of Activity >= 3"]
+                df_sleep_correlation['Day Category'] = pd.Categorical(df_sleep_correlation['Day Category'], categories=day_category_order, ordered=True)
+                df_sleep_correlation = df_sleep_correlation.sort_values('Day Category')
+
+                fig_sleep_correlation = px.bar(
+                    df_sleep_correlation,
+                    x='Day Category',
+                    y=['Average Deep Sleep Hours', 'Average Total Sleep Hours'],
+                    barmode='group',
+                    title='Average Sleep Metrics Relative to Activity Days'
+                )
+                st.plotly_chart(fig_sleep_correlation, use_container_width=True)
+            else:
+                st.info("Not enough data to show sleep correlation with activity for the selected heart rate range.")
+        else:
+            st.info("No data available for the selected resting heart rate range to analyze sleep and activity correlation.")
+    else:
+        st.info("Required columns for activity and sleep correlation are missing (ActivityPerformedToday, deepSleepHours, sleepTimeHours, Date, restingHeartRate).")
+
+
     st.markdown("### Recent data preview")
     st.dataframe(df.sort_values("Date", ascending=False).head(10))
 
