@@ -228,14 +228,19 @@ def forecast_metric_on_date(df_activity, metric_col, target_date):
         return None, None
     feat_df = prepare_feature_df_for_metric(df_activity, metric_col)
     if feat_df.empty or len(feat_df) < 5:
+        # Fallback: if not enough data, return recent mean or last value
         recent_mean = df_activity[metric_col].dropna().tail(7).mean()
+        if math.isnan(recent_mean):
+             return None, "mean_fallback_nan" # Indicate failure to get a number
         return float(recent_mean), "mean_fallback"
+    
     min_date = feat_df['Date'].min()
     target_day_idx = (pd.to_datetime(target_date) - min_date).days
     X = feat_df[['day_idx', 'rolling_mean_7', 'rolling_std_7', 'day_of_week', 'is_weekend']].fillna(0)
     y = feat_df[metric_col]
     model = train_xgb_regressor(X, y)
     last_row = feat_df.iloc[-1]
+    
     X_target = pd.DataFrame({
         'day_idx': [target_day_idx],
         'rolling_mean_7': [last_row['rolling_mean_7']],
@@ -246,7 +251,11 @@ def forecast_metric_on_date(df_activity, metric_col, target_date):
     try:
         pred = model.predict(X_target)[0]
     except Exception:
-        pred = float(last_row[metric_col])
+        # If prediction fails, fall back to the last known value
+        pred = float(last_row[metric_col]) if not math.isnan(float(last_row[metric_col])) else None
+
+    if pred is None: # If pred is still None, return None
+        return None, model
     return float(pred), model
 
 # ==========================================================
@@ -382,8 +391,8 @@ def show_overview_page(user):
     if any(col in df.columns for col in heatmap_data_cols):
         df_heatmap = df.copy()
         df_heatmap['DayOfWeek'] = df_heatmap['Date'].dt.day_name()
-        # Changed Y-axis to Month and ensure it's treated as categorical
-        df_heatmap['Month'] = df_heatmap['Date'].dt.strftime('%Y-%m') # Format as YYYY-MM for chronological sorting
+        # Ensure Month is formatted as YYYY-MM for chronological sorting and distinct categories
+        df_heatmap['Month'] = df_heatmap['Date'].dt.strftime('%Y-%m') 
 
         selected_metric_heatmap = st.selectbox(
             "Select metric for heatmap",
@@ -399,8 +408,7 @@ def show_overview_page(user):
             day_order = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
             daily_agg['DayOfWeek'] = pd.Categorical(daily_agg['DayOfWeek'], categories=day_order, ordered=True)
             
-            # Ensure Month is treated as a categorical for proper display
-            # Plotly Express will usually handle strings like 'YYYY-MM' as discrete, but explicit sort helps.
+            # Sort by Month (chronologically) and DayOfWeek for correct heatmap rendering
             daily_agg = daily_agg.sort_values(['Month', 'DayOfWeek'])
 
             fig_heatmap = px.density_heatmap(
@@ -421,8 +429,6 @@ def show_overview_page(user):
     if all(c in df.columns for c in ['ActivityPerformedToday', 'deepSleepHours', 'sleepTimeHours', 'Date', 'restingHeartRate']):
         df_sleep_activity = df.copy()
         df_sleep_activity['Date'] = pd.to_datetime(df_sleep_activity['Date'])
-        
-        # Ensure 'ActivityPerformedToday' is boolean
         df_sleep_activity['ActivityPerformedToday'] = df_sleep_activity['ActivityPerformedToday'].astype(bool)
 
         # Filter by restingHeartRate
@@ -443,77 +449,80 @@ def show_overview_page(user):
             ].copy()
         else:
             st.info("Insufficient data for Resting Heart Rate filtering. Displaying charts with all available data (no HR filter applied).")
-            df_sleep_activity_filtered = df_sleep_activity.copy() # Use full data if HR data is bad
-            selected_hr_range = (0.0, 100.0) # Default range for display consistency, though not actively filtering
+            df_sleep_activity_filtered = df_sleep_activity.copy() 
+            selected_hr_range = (0.0, 100.0) 
 
         if not df_sleep_activity_filtered.empty:
             
-            # --- Removed: Plot deepSleepHours and sleepTimeHours by ActivityPerformedToday ---
-            # This chart was removed as per user request.
-
             # --- Statistical Evidence: Pearson Correlation ---
             st.subheader("Statistical Correlation Evidence")
-            # Convert ActivityPerformedToday to numeric for correlation calculation (True=1, False=0)
             df_sleep_activity_filtered['ActivityNum'] = df_sleep_activity_filtered['ActivityPerformedToday'].astype(int)
 
             # Drop rows with NaN in relevant columns for correlation calculation
             df_corr = df_sleep_activity_filtered[['ActivityNum', 'deepSleepHours', 'sleepTimeHours']].dropna()
 
-            if not df_corr.empty and df_corr['ActivityNum'].nunique() > 1 and \
-               df_corr['deepSleepHours'].count() > 1 and df_corr['sleepTimeHours'].count() > 1:
-                
-                corr_deep_sleep = df_corr['ActivityNum'].corr(df_corr['deepSleepHours'])
-                corr_total_sleep = df_corr['ActivityNum'].corr(df_corr['sleepTimeHours'])
+            # Check for sufficient variance for correlation calculation
+            has_activity_variance = df_corr['ActivityNum'].nunique() > 1
+            has_deep_sleep_variance = df_corr['deepSleepHours'].count() > 1 and df_corr['deepSleepHours'].nunique() > 1
+            has_total_sleep_variance = df_corr['sleepTimeHours'].count() > 1 and df_corr['sleepTimeHours'].nunique() > 1
 
-                if not math.isnan(corr_deep_sleep):
-                    st.markdown(f"**Pearson Correlation (Activity vs. Deep Sleep Hours):** `{corr_deep_sleep:.2f}`")
-                else:
-                    st.info("Not enough valid, varied data to compute correlation for Activity vs. Deep Sleep Hours.")
 
-                if not math.isnan(corr_total_sleep):
-                    st.markdown(f"**Pearson Correlation (Activity vs. Total Sleep Hours):** `{corr_total_sleep:.2f}`")
+            if not df_corr.empty and has_activity_variance:
+                if has_deep_sleep_variance:
+                    corr_deep_sleep = df_corr['ActivityNum'].corr(df_corr['deepSleepHours'])
+                    if not math.isnan(corr_deep_sleep):
+                        st.markdown(f"**Pearson Correlation (Activity vs. Deep Sleep Hours):** `{corr_deep_sleep:.2f}`")
+                    else:
+                        st.info("Not enough valid, varied data to compute correlation for Activity vs. Deep Sleep Hours.")
                 else:
-                     st.info("Not enough valid, varied data to compute correlation for Activity vs. Total Sleep Hours.")
+                    st.info("Not enough variance in Deep Sleep Hours data to compute correlation.")
+
+                if has_total_sleep_variance:
+                    corr_total_sleep = df_corr['ActivityNum'].corr(df_corr['sleepTimeHours'])
+                    if not math.isnan(corr_total_sleep):
+                        st.markdown(f"**Pearson Correlation (Activity vs. Total Sleep Hours):** `{corr_total_sleep:.2f}`")
+                    else:
+                         st.info("Not enough valid, varied data to compute correlation for Activity vs. Total Sleep Hours.")
+                else:
+                    st.info("Not enough variance in Total Sleep Hours data to compute correlation.")
                 
                 st.caption("A correlation coefficient near `1` indicates a strong positive linear relationship, near `-1` a strong negative linear relationship, and near `0` indicates no linear relationship. This helps quantify the link between activity and sleep.")
             else:
-                st.info("Not enough valid data (e.g., insufficient variance or data points after filtering) to compute Pearson correlation coefficients.")
+                st.info("Not enough valid data (e.g., insufficient variance in activity or sleep data after filtering) to compute Pearson correlation coefficients.")
             
             # --- Plot sleep metrics relative to activity days ---
+            st.subheader("Sleep Patterns Relative to Activity Days vs. Overall Average")
             activity_dates = df_sleep_activity_filtered[df_sleep_activity_filtered['ActivityPerformedToday'] == True]['Date'].unique()
             
+            # Calculate overall averages
+            overall_avg_deep_sleep = df_sleep_activity_filtered['deepSleepHours'].mean()
+            overall_avg_total_sleep = df_sleep_activity_filtered['sleepTimeHours'].mean()
+
             # Create a list to store data for plotting
             sleep_analysis_data = []
 
             for date_offset in range(4): # Day 0 (activity), Day +1, Day +2, Day >=3
                 temp_dates = []
                 if date_offset == 0:
-                    # Day of activity
                     temp_dates = activity_dates
                     day_label = "Day Of Activity"
                 elif date_offset == 1:
-                    # Day + 1
                     for adate in activity_dates:
                         temp_dates.append(pd.to_datetime(adate) + timedelta(days=1))
                     day_label = "Day Of Activity + 1"
                 elif date_offset == 2:
-                    # Day + 2
                     for adate in activity_dates:
                         temp_dates.append(pd.to_datetime(adate) + timedelta(days=2))
                     day_label = "Day Of Activity + 2"
                 else: # date_offset >= 3
-                    # Day >= 3
-                    # For "Day >= 3", collect all dates that are 3 or more days after any activity,
-                    # but only consider each unique calendar day once.
                     all_future_dates = set()
                     for adate in activity_dates:
-                        for i in range(3, 8): # consider up to 7 days after activity to capture a reasonable window
+                        for i in range(3, 8): 
                             all_future_dates.add(pd.to_datetime(adate) + timedelta(days=i))
                     temp_dates = list(all_future_dates)
                     day_label = "Day Of Activity >= 3"
                 
                 # Filter sleep data for these temp_dates
-                # Ensure the Date column is treated consistently for comparison
                 temp_df = df_sleep_activity_filtered[df_sleep_activity_filtered['Date'].isin(pd.to_datetime(temp_dates))].copy()
                 if not temp_df.empty:
                     avg_deep_sleep = temp_df['deepSleepHours'].mean()
@@ -532,14 +541,53 @@ def show_overview_page(user):
                 df_sleep_correlation['Day Category'] = pd.Categorical(df_sleep_correlation['Day Category'], categories=day_category_order, ordered=True)
                 df_sleep_correlation = df_sleep_correlation.sort_values('Day Category')
 
-                fig_sleep_correlation = px.bar(
-                    df_sleep_correlation,
-                    x='Day Category',
-                    y=['Average Deep Sleep Hours', 'Average Total Sleep Hours'],
-                    barmode='group',
-                    title='Average Sleep Metrics Relative to Activity Days'
+                fig_sleep_correlation = go.Figure()
+
+                # Add Deep Sleep bars
+                fig_sleep_correlation.add_trace(go.Bar(
+                    x=df_sleep_correlation['Day Category'],
+                    y=df_sleep_correlation['Average Deep Sleep Hours'],
+                    name='Avg Deep Sleep',
+                    marker_color=['green' if val > overall_avg_deep_sleep else 'red' for val in df_sleep_correlation['Average Deep Sleep Hours']],
+                    opacity=0.7
+                ))
+                # Add Total Sleep bars
+                fig_sleep_correlation.add_trace(go.Bar(
+                    x=df_sleep_correlation['Day Category'],
+                    y=df_sleep_correlation['Average Total Sleep Hours'],
+                    name='Avg Total Sleep',
+                    marker_color=['blue' if val > overall_avg_total_sleep else 'orange' for val in df_sleep_correlation['Average Total Sleep Hours']],
+                    opacity=0.7
+                ))
+
+                # Add overall average lines
+                if not math.isnan(overall_avg_deep_sleep):
+                    fig_sleep_correlation.add_hline(
+                        y=overall_avg_deep_sleep, 
+                        line_dash="dash", 
+                        line_color="darkgreen",
+                        annotation_text=f"Overall Avg Deep Sleep: {overall_avg_deep_sleep:.1f} hrs",
+                        annotation_position="bottom right"
+                    )
+                if not math.isnan(overall_avg_total_sleep):
+                    fig_sleep_correlation.add_hline(
+                        y=overall_avg_total_sleep, 
+                        line_dash="dash", 
+                        line_color="darkblue",
+                        annotation_text=f"Overall Avg Total Sleep: {overall_avg_total_sleep:.1f} hrs",
+                        annotation_position="top right"
+                    )
+
+                fig_sleep_correlation.update_layout(
+                    title='Average Sleep Metrics Relative to Activity Days vs. Overall Average',
+                    xaxis_title='Day Category',
+                    yaxis_title='Hours',
+                    barmode='group'
                 )
                 st.plotly_chart(fig_sleep_correlation, use_container_width=True)
+
+                st.caption("Bars above the dashed line indicate 'beating the average' for that sleep metric on that day relative to activity. Green/Blue bars are above overall average, Red/Orange bars are below.")
+
             else:
                 st.info(f"Not enough data to show sleep correlation with activity for the selected heart rate range ({selected_hr_range[0]} - {selected_hr_range[1]}).")
         else:
@@ -642,8 +690,8 @@ def show_insights_page(user):
                     # Add forecast line starting from the last historical point to the forecast target date
                     # Ensure the forecast line starts from the *end* of the historical data, not necessarily the day after.
                     # We connect the last historical point directly to the forecast point.
-                    fig.add_trace(go.Scatter(x=[last_date, target_dt], y=[last_val, forecast_val], mode='lines', name='Forecast',
-                                             line=dict(dash='dash', color='red')))
+                    fig.add_trace(go.Scatter(x=[last_date, target_dt], y=[last_val, forecast_val], mode='lines+markers', name='Forecast',
+                                             line=dict(dash='dash', color='red', dash='dash'))) # Added marker for the forecast point
                     
                     fig.add_hline(y=float(g['target_value']), line_dash='dash', annotation_text='Target', annotation_position='top left')
                     fig.update_layout(title=f"Forecast vs Target for {g['goal_type']}")
