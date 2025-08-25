@@ -392,7 +392,7 @@ def show_overview_page(user):
             daily_agg['DayOfWeek'] = pd.Categorical(daily_agg['DayOfWeek'], categories=day_order, ordered=True)
             daily_agg = daily_agg.sort_values(['Week', 'DayOfWeek'])
 
-            fig_heatmap = px.heatmap(
+            fig_heatmap = px.density_heatmap( # Changed from px.heatmap to px.density_heatmap
                 daily_agg,
                 x="DayOfWeek",
                 y="Week",
