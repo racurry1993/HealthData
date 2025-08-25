@@ -2,7 +2,7 @@
 Garmin Coach Dashboard - Streamlit app
 
 Requirements (install via pip):
-streamlit pandas numpy plotly gspread gspread_dataframe scikit-learn xgboost google-generative-ai garminconnect python-dateutil
+streamlit pandas numpy plotly gspread ggspread_dataframe scikit-learn xgboost google-generative-ai garminconnect python-dateutil
 
 Secrets expected in Streamlit secrets:
 - gcp_service_account: (service account JSON dict)
@@ -353,9 +353,14 @@ def show_overview_page(user):
         return
 
     # Convert relevant columns to numeric, coercing errors
-    for col in ['totalSteps', 'restingHeartRate', 'deepSleepHours', 'sleepTimeHours']:
+    for col in ['totalSteps', 'restingHeartRate', 'deepSleepHours', 'sleepTimeHours', 'ActivityPerformedToday']:
         if col in df.columns:
-            df[col] = pd.to_numeric(df[col], errors='coerce')
+            # Ensure ActivityPerformedToday is handled correctly as boolean/numeric
+            if col == 'ActivityPerformedToday':
+                df[col] = df[col].astype(bool)
+            else:
+                df[col] = pd.to_numeric(df[col], errors='coerce')
+
 
     # KPIs
     kpi_cols = []
@@ -377,28 +382,31 @@ def show_overview_page(user):
     if any(col in df.columns for col in heatmap_data_cols):
         df_heatmap = df.copy()
         df_heatmap['DayOfWeek'] = df_heatmap['Date'].dt.day_name()
-        df_heatmap['Week'] = df_heatmap['Date'].dt.isocalendar().week.astype(str)
+        # Changed Y-axis to Month
+        df_heatmap['Month'] = df_heatmap['Date'].dt.strftime('%Y-%m') # Format as YYYY-MM for chronological sorting
 
         selected_metric_heatmap = st.selectbox(
             "Select metric for heatmap",
-            [col for col in heatmap_data_cols if col in df_heatmap.columns]
+            [col for col in heatmap_data_cols if col in df_heatmap.columns],
+            key="heatmap_metric_select"
         )
 
         if selected_metric_heatmap:
             # Aggregate daily to handle multiple entries per day if preprocessing creates them
-            daily_agg = df_heatmap.groupby(['Date', 'DayOfWeek', 'Week'])[selected_metric_heatmap].mean().reset_index()
-            # Order days of week
+            # Group by Month and DayOfWeek to get average for each combination
+            daily_agg = df_heatmap.groupby(['Month', 'DayOfWeek'])[selected_metric_heatmap].mean().reset_index()
+            # Order days of week for consistent heatmap display
             day_order = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
             daily_agg['DayOfWeek'] = pd.Categorical(daily_agg['DayOfWeek'], categories=day_order, ordered=True)
-            daily_agg = daily_agg.sort_values(['Week', 'DayOfWeek'])
+            daily_agg = daily_agg.sort_values(['Month', 'DayOfWeek']) # Sort by Month then DayOfWeek
 
-            fig_heatmap = px.density_heatmap( # Changed from px.heatmap to px.density_heatmap
+            fig_heatmap = px.density_heatmap(
                 daily_agg,
                 x="DayOfWeek",
-                y="Week",
+                y="Month", # Changed to Month
                 z=selected_metric_heatmap,
                 color_continuous_scale="Viridis",
-                title=f'{selected_metric_heatmap} Heatmap by Day of Week and Week'
+                title=f'Average {selected_metric_heatmap} Heatmap by Day of Week and Month'
             )
             st.plotly_chart(fig_heatmap, use_container_width=True)
     else:
@@ -415,18 +423,25 @@ def show_overview_page(user):
         df_sleep_activity['ActivityPerformedToday'] = df_sleep_activity['ActivityPerformedToday'].astype(bool)
 
         # Filter by restingHeartRate
-        hr_min = df_sleep_activity['restingHeartRate'].min()
-        hr_max = df_sleep_activity['restingHeartRate'].max()
-        selected_hr_range = st.slider(
-            "Filter by Resting Heart Rate",
-            min_value=float(hr_min) if not math.isnan(hr_min) else 0.0,
-            max_value=float(hr_max) if not math.isnan(hr_max) else 100.0,
-            value=(float(hr_min) if not math.isnan(hr_min) else 0.0, float(hr_max) if not math.isnan(hr_max) else 100.0)
-        )
-        df_sleep_activity_filtered = df_sleep_activity[
-            (df_sleep_activity['restingHeartRate'] >= selected_hr_range[0]) &
-            (df_sleep_activity['restingHeartRate'] <= selected_hr_range[1])
-        ].copy()
+        hr_min_val = df_sleep_activity['restingHeartRate'].min()
+        hr_max_val = df_sleep_activity['restingHeartRate'].max()
+        
+        if not math.isnan(hr_min_val) and not math.isnan(hr_max_val) and hr_min_val <= hr_max_val:
+            selected_hr_range = st.slider(
+                "Filter data by **Resting Heart Rate** range:",
+                min_value=float(hr_min_val),
+                max_value=float(hr_max_val),
+                value=(float(hr_min_val), float(hr_max_val))
+            )
+            st.caption("This slider filters the data used in the following correlation charts based on your resting heart rate. Adjusting it will show how sleep and activity patterns change within specific HR zones.")
+            df_sleep_activity_filtered = df_sleep_activity[
+                (df_sleep_activity['restingHeartRate'] >= selected_hr_range[0]) &
+                (df_sleep_activity['restingHeartRate'] <= selected_hr_range[1])
+            ].copy()
+        else:
+            st.info("Insufficient data for Resting Heart Rate filtering.")
+            df_sleep_activity_filtered = df_sleep_activity.copy() # Use full data if HR data is bad
+            selected_hr_range = (0.0, 100.0) # Default range for display consistency
 
         if not df_sleep_activity_filtered.empty:
             
@@ -443,6 +458,32 @@ def show_overview_page(user):
             )
             st.plotly_chart(fig_sleep_activity, use_container_width=True)
 
+            # --- Statistical Evidence: Pearson Correlation ---
+            st.subheader("Statistical Correlation Evidence")
+            # Convert ActivityPerformedToday to numeric for correlation calculation (True=1, False=0)
+            df_sleep_activity_filtered['ActivityNum'] = df_sleep_activity_filtered['ActivityPerformedToday'].astype(int)
+
+            if not df_sleep_activity_filtered['ActivityNum'].isnull().all() and \
+               not df_sleep_activity_filtered['deepSleepHours'].isnull().all() and \
+               not df_sleep_activity_filtered['sleepTimeHours'].isnull().all():
+                
+                corr_deep_sleep = df_sleep_activity_filtered['ActivityNum'].corr(df_sleep_activity_filtered['deepSleepHours'])
+                corr_total_sleep = df_sleep_activity_filtered['ActivityNum'].corr(df_sleep_activity_filtered['sleepTimeHours'])
+
+                if not math.isnan(corr_deep_sleep):
+                    st.markdown(f"**Pearson Correlation (Activity vs. Deep Sleep Hours):** `{corr_deep_sleep:.2f}`")
+                else:
+                    st.info("Not enough data to compute correlation for Activity vs. Deep Sleep Hours.")
+
+                if not math.isnan(corr_total_sleep):
+                    st.markdown(f"**Pearson Correlation (Activity vs. Total Sleep Hours):** `{corr_total_sleep:.2f}`")
+                else:
+                     st.info("Not enough data to compute correlation for Activity vs. Total Sleep Hours.")
+                
+                st.caption("A correlation coefficient near `1` indicates a strong positive linear relationship, near `-1` a strong negative linear relationship, and near `0` indicates no linear relationship. This helps quantify the link between activity and sleep.")
+            else:
+                st.info("Not enough valid data to compute Pearson correlation coefficients.")
+            
             # --- Plot sleep metrics relative to activity days ---
             activity_dates = df_sleep_activity_filtered[df_sleep_activity_filtered['ActivityPerformedToday'] == True]['Date'].unique()
             
@@ -467,13 +508,18 @@ def show_overview_page(user):
                     day_label = "Day Of Activity + 2"
                 else: # date_offset >= 3
                     # Day >= 3
+                    # For "Day >= 3", we need to collect all dates that are 3 or more days after any activity,
+                    # but only consider each unique calendar day once.
+                    all_future_dates = set()
                     for adate in activity_dates:
-                        for i in range(3, 8): # consider up to 7 days after activity
-                            temp_dates.append(pd.to_datetime(adate) + timedelta(days=i))
+                        for i in range(3, 8): # consider up to 7 days after activity to capture a reasonable window
+                            all_future_dates.add(pd.to_datetime(adate) + timedelta(days=i))
+                    temp_dates = list(all_future_dates)
                     day_label = "Day Of Activity >= 3"
                 
                 # Filter sleep data for these temp_dates
-                temp_df = df_sleep_activity_filtered[df_sleep_activity_filtered['Date'].isin(temp_dates)].copy()
+                # Ensure the Date column is treated consistently for comparison
+                temp_df = df_sleep_activity_filtered[df_sleep_activity_filtered['Date'].isin(pd.to_datetime(temp_dates))].copy()
                 if not temp_df.empty:
                     avg_deep_sleep = temp_df['deepSleepHours'].mean()
                     avg_total_sleep = temp_df['sleepTimeHours'].mean()
@@ -500,9 +546,9 @@ def show_overview_page(user):
                 )
                 st.plotly_chart(fig_sleep_correlation, use_container_width=True)
             else:
-                st.info("Not enough data to show sleep correlation with activity for the selected heart rate range.")
+                st.info(f"Not enough data to show sleep correlation with activity for the selected heart rate range ({selected_hr_range[0]} - {selected_hr_range[1]}).")
         else:
-            st.info("No data available for the selected resting heart rate range to analyze sleep and activity correlation.")
+            st.info(f"No data available for the selected resting heart rate range ({selected_hr_range[0]} - {selected_hr_range[1]}) to analyze sleep and activity correlation.")
     else:
         st.info("Required columns for activity and sleep correlation are missing (ActivityPerformedToday, deepSleepHours, sleepTimeHours, Date, restingHeartRate).")
 
@@ -591,14 +637,30 @@ def show_insights_page(user):
                 last_date = hist['Date'].max()
                 last_val = hist[metric_col].iloc[-1]
                 target_dt = pd.to_datetime(g['target_date'])
-                proj_dates = pd.date_range(start=last_date, end=target_dt, freq='D')
-                proj_vals = np.linspace(last_val, forecast_val, len(proj_dates))
-                fig = go.Figure()
-                fig.add_trace(go.Scatter(x=hist['Date'], y=hist[metric_col], mode='lines+markers', name='history'))
-                fig.add_trace(go.Scatter(x=proj_dates, y=proj_vals, mode='lines', name='forecast'))
-                fig.add_hline(y=float(g['target_value']), line_dash='dash', annotation_text='target', annotation_position='top left')
-                fig.update_layout(title=f"Forecast vs Target for {g['goal_type']}")
-                st.plotly_chart(fig, use_container_width=True)
+                # Generate dates for the forecast line starting from the last historical date up to the target date
+                proj_dates = pd.date_range(start=last_date + timedelta(days=1), end=target_dt, freq='D')
+                if not proj_dates.empty:
+                    # To display the forecast in the chart, we need a series of predicted values.
+                    # For simplicity, we can linearly interpolate from the last known value to the forecast_val.
+                    # For a more robust forecast plot, a time series model would predict each point.
+                    # Since forecast_metric_on_date gives a single target date forecast,
+                    # we'll create a simple projection from the last actual value to the forecast.
+                    
+                    # Combine historical and forecast for plotting
+                    combined_dates = pd.to_datetime(hist['Date'].tolist() + [target_dt])
+                    combined_values = hist[metric_col].tolist() + [forecast_val]
+
+                    fig = go.Figure()
+                    fig.add_trace(go.Scatter(x=hist['Date'], y=hist[metric_col], mode='lines+markers', name='Historical Data'))
+                    # Add forecast line starting from the last historical point
+                    fig.add_trace(go.Scatter(x=[last_date, target_dt], y=[last_val, forecast_val], mode='lines', name='Forecast',
+                                             line=dict(dash='dash', color='red')))
+                    
+                    fig.add_hline(y=float(g['target_value']), line_dash='dash', annotation_text='Target', annotation_position='top left')
+                    fig.update_layout(title=f"Forecast vs Target for {g['goal_type']}")
+                    st.plotly_chart(fig, use_container_width=True)
+                else:
+                    st.info("No future dates to plot the forecast or historical data insufficient for projection.")
             else:
                 st.info(f"No data mapped for goal type {g['goal_type']}.")
     # Rolling trends
