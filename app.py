@@ -27,7 +27,7 @@ from sklearn.linear_model import LinearRegression
 import uuid
 import math
 import warnings
-from data_pre_processing import preprocessing_garmin_data
+from data_pre_processing import preprocessing_garmin_data  # updated: now accepts start_date and returns DataFrame only
 from garminconnect import Garmin
 import json
 import time
@@ -576,6 +576,7 @@ def show_overview_page(user):
             st.info("Not enough data to calculate variance.")
     else:
         st.info("Missing required data to calculate variance.")
+
 
 def show_insights_page(user):
     st.title("Insights & Forecasts")
