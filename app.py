@@ -776,14 +776,17 @@ def show_sync_page(user):
                 )
                 client.login()
                 
-                # Fetch data for the last 90 days
-                today = datetime.date.today()
-                start_date = today - timedelta(days=90)
+                # --- FIX START ---
+                # Define the date range for data fetching, as required by the preprocessing function
+                end_date = datetime.date.today()
+                start_date = end_date - datetime.timedelta(days=90)
                 
-                activities = client.get_activities_by_date(start_date.isoformat(), today.isoformat())
+                activities = client.get_activities_by_date(start_date.isoformat(), end_date.isoformat())
                 
                 # Preprocess data using the provided function
-                df_garmin = preprocessing_garmin_data(activities, start_date)
+                # Now passing both start_date and end_date as required
+                df_garmin = preprocessing_garmin_data(activities, start_date, end_date)
+                # --- FIX END ---
                 
                 # Append to Google Sheets
                 append_activity_data(df_garmin, user['email'])
