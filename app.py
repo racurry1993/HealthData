@@ -647,50 +647,51 @@ def show_insights_page(user):
     st.markdown("---")
     st.subheader("Rolling Averages & 30-Day Forecast")
     
-    df_ts = df.copy()
-    df_ts['Date'] = pd.to_datetime(df_ts['Date'])
-    df_ts = df_ts.sort_values('Date').reset_index(drop=True)
-    
-    # List of metrics to plot
-    metrics_to_plot = ['totalSteps', 'sleepTimeHours']
+    with st.spinner("Generating charts..."):
+        df_ts = df.copy()
+        df_ts['Date'] = pd.to_datetime(df_ts['Date'])
+        df_ts = df_ts.sort_values('Date').reset_index(drop=True)
+        
+        # List of metrics to plot
+        metrics_to_plot = ['totalSteps', 'sleepTimeHours']
 
-    for metric in metrics_to_plot:
-        if metric in df_ts.columns and not df_ts[metric].isnull().all():
-            st.write(f"### {metric.replace('totalSteps', 'Total Steps').replace('sleepTimeHours', 'Total Sleep Hours')}")
-            
-            # Prepare data and calculate rolling average
-            df_plot = df_ts[['Date', metric]].dropna().copy()
-            df_plot['rolling_mean_7'] = df_plot[metric].rolling(window=7).mean().shift(-3)
-            
-            # Forecast the next 30 days of rolling average
-            forecast_df = forecast_rolling_average(df_ts, metric, forecast_days=30)
-            
-            # Plot
-            fig = go.Figure()
+        for metric in metrics_to_plot:
+            if metric in df_ts.columns and not df_ts[metric].isnull().all():
+                st.write(f"### {metric.replace('totalSteps', 'Total Steps').replace('sleepTimeHours', 'Total Sleep Hours')}")
+                
+                # Prepare data and calculate rolling average
+                df_plot = df_ts[['Date', metric]].dropna().copy()
+                df_plot['rolling_mean_7'] = df_plot[metric].rolling(window=7).mean().shift(-3)
+                
+                # Forecast the next 30 days of rolling average
+                forecast_df = forecast_rolling_average(df_ts, metric, forecast_days=30)
+                
+                # Plot
+                fig = go.Figure()
 
-            # Add raw data points
-            fig.add_trace(go.Scatter(x=df_plot['Date'], y=df_plot[metric], mode='markers', name='Daily Value',
-                                     marker=dict(color='lightgray', size=5)))
-            
-            # Add rolling average line
-            fig.add_trace(go.Scatter(x=df_plot['Date'], y=df_plot['rolling_mean_7'], mode='lines', name='7-Day Rolling Average',
-                                     line=dict(color='blue', width=2)))
+                # Add raw data points
+                fig.add_trace(go.Scatter(x=df_plot['Date'], y=df_plot[metric], mode='markers', name='Daily Value',
+                                         marker=dict(color='lightgray', size=5)))
+                
+                # Add rolling average line
+                fig.add_trace(go.Scatter(x=df_plot['Date'], y=df_plot['rolling_mean_7'], mode='lines', name='7-Day Rolling Average',
+                                         line=dict(color='blue', width=2)))
 
-            # Add forecast line
-            if not forecast_df.empty:
-                fig.add_trace(go.Scatter(x=forecast_df['Date'], y=forecast_df['rolling_mean_7'], mode='lines', name='30-Day Forecast',
-                                         line=dict(color='red', width=2, dash='dash')))
+                # Add forecast line
+                if not forecast_df.empty:
+                    fig.add_trace(go.Scatter(x=forecast_df['Date'], y=forecast_df['rolling_mean_7'], mode='lines', name='30-Day Forecast',
+                                             line=dict(color='red', width=2, dash='dash')))
 
-            fig.update_layout(
-                title=f"7-Day Rolling Average & 30-Day Forecast for {metric.replace('totalSteps', 'Total Steps').replace('sleepTimeHours', 'Total Sleep Hours')}",
-                xaxis_title="Date",
-                yaxis_title=metric,
-                legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1)
-            )
-            
-            st.plotly_chart(fig, use_container_width=True)
-        else:
-            st.info(f"Not enough data for the {metric.replace('totalSteps', 'Total Steps').replace('sleepTimeHours', 'Total Sleep Hours')} chart.")
+                fig.update_layout(
+                    title=f"7-Day Rolling Average & 30-Day Forecast for {metric.replace('totalSteps', 'Total Steps').replace('sleepTimeHours', 'Total Sleep Hours')}",
+                    xaxis_title="Date",
+                    yaxis_title=metric,
+                    legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1)
+                )
+                
+                st.plotly_chart(fig, use_container_width=True)
+            else:
+                st.info(f"Not enough data for the {metric.replace('totalSteps', 'Total Steps').replace('sleepTimeHours', 'Total Sleep Hours')} chart.")
 
     st.markdown("---")
     st.subheader("Goal Progress & Forecast")
