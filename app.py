@@ -27,7 +27,7 @@ from sklearn.linear_model import LinearRegression
 import uuid
 import math
 import warnings
-from data_pre_processing import preprocessing_garmin_data  # updated: now accepts start_date and returns DataFrame only
+from data_pre_processing import preprocessing_garmin_data
 from garminconnect import Garmin
 import json
 import time
@@ -765,62 +765,39 @@ def show_sync_page(user):
     st.write("Sync your data directly from Garmin Connect.")
     
     if st.secrets.get("garmin_username") and st.secrets.get("garmin_password"):
-        st.info("Garmin credentials are pre-configured in Streamlit secrets.")
+        sync_btn = st.button("Sync Data")
+        if sync_btn:
+            with st.spinner("Fetching data from Garmin..."):
+                try:
+                    # Add Garmin login logic here
+                    client = Garmin(
+                        st.secrets["garmin_username"],
+                        st.secrets["garmin_password"]
+                    )
+                    client.login()
+                    
+                    # Fetch data for the last 90 days
+                    today = datetime.date.today()
+                    start_date = today - timedelta(days=90)
+                    
+                    activities = client.get_activities_by_date(start_date.isoformat(), today.isoformat())
+                    
+                    # Preprocess data using the provided function
+                    df_garmin = preprocessing_garmin_data(activities, start_date)
+                    
+                    # Append to Google Sheets
+                    append_activity_data(df_garmin, user['email'])
+                    
+                    st.success("Data synced successfully!")
+                except Exception as e:
+                    st.error(f"Failed to sync data from Garmin: {e}")
     else:
         st.warning("To sync data, you must provide your Garmin username and password in Streamlit secrets.")
-        return
 
-    sync_btn = st.button("Sync Data")
-    if sync_btn:
-        with st.spinner("Fetching data from Garmin..."):
-            try:
-                # Add Garmin login logic here
-                client = Garmin(
-                    st.secrets["garmin_username"],
-                    st.secrets["garmin_password"]
-                )
-                client.login()
-                
-                # Fetch data for the last 90 days
-                today = datetime.date.today()
-                start_date = today - timedelta(days=90)
-                
-                activities = client.get_activities_by_date(start_date.isoformat(), today.isoformat())
-                
-                # Preprocess data using the provided function
-                df_garmin = preprocessing_garmin_data(activities, start_date)
-                
-                # Append to Google Sheets
-                append_activity_data(df_garmin, user['email'])
-                
-                st.success("Data synced successfully!")
-            except Exception as e:
-                st.error(f"Failed to sync data from Garmin: {e}")
 
 # ==========================================================
 # UI: Login / Registration
 # ==========================================================
-def login_panel():
-    st.sidebar.title("Sign in / Register")
-    email = st.sidebar.text_input("Email", value="", placeholder="your@email.com")
-    role_choice = st.sidebar.selectbox("Register as (if new)", ["user", "coach"])
-    btn = st.sidebar.button("Login / Register")
-    if btn:
-        if not email:
-            st.sidebar.error("Please enter an email")
-            return None
-        users = read_users()
-        if not users.empty and (users['email'] == email).any():
-            user_row = users[users['email'] == email].iloc[0].to_dict()
-            st.sidebar.success(f"Welcome back: {email} ({user_row.get('role')})")
-            return user_row
-        else:
-            append_user_row(email, role=role_choice)
-            st.sidebar.success(f"Registered {email} as {role_choice}. Re-click login to load profile.")
-            return {"email": email, "role": role_choice, "linked_coach_email": "", "certified_coach": False}
-    return None
-
-# --- Main App Logic ---
 # Global state management
 if 'logged_in' not in st.session_state:
     st.session_state.logged_in = False
@@ -828,10 +805,29 @@ if 'user_profile' not in st.session_state:
     st.session_state.user_profile = None
 
 # Sidebar login
-user_profile = login_panel()
-if user_profile:
-    st.session_state.logged_in = True
-    st.session_state.user_profile = user_profile
+st.sidebar.title("Sign in / Register")
+email = st.sidebar.text_input("Email", value="", placeholder="your@email.com")
+role_choice = st.sidebar.selectbox("Register as (if new)", ["user", "coach"])
+btn = st.sidebar.button("Login / Register")
+
+if btn:
+    if not email:
+        st.sidebar.error("Please enter an email")
+    else:
+        users = read_users()
+        if not users.empty and (users['email'] == email).any():
+            user_row = users[users['email'] == email].iloc[0].to_dict()
+            st.session_state.logged_in = True
+            st.session_state.user_profile = user_row
+            st.sidebar.success(f"Welcome back, {email} ({user_row.get('role')})!")
+        else:
+            append_user_row(email, role=role_choice)
+            st.session_state.logged_in = True
+            st.session_state.user_profile = {"email": email, "role": role_choice, "linked_coach_email": "", "certified_coach": False}
+            st.sidebar.success(f"Registered {email} as {role_choice}. You are now logged in.")
+    # Rerun the app to update the main content based on the new session state
+    st.experimental_rerun()
+
 
 # Main content
 if st.session_state.logged_in:
