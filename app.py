@@ -29,7 +29,6 @@ import math
 import warnings
 from data_pre_processing import preprocessing_garmin_data
 from garminconnect import Garmin
-from garminconnect.exceptions import GarminConnectException
 import json
 import time
 from dateutil.relativedelta import relativedelta
@@ -556,7 +555,13 @@ def show_overview_page(user):
         labels={'daysSinceLastWorkout_group': 'Days Since Last Workout', 'deepSleepPercentage': 'Average Deep Sleep Percentage (%)'},
         color='daysSinceLastWorkout_group'
     )
-    fig_deep_sleep_by_days.update_layout(showlegend=False, title_x=0.5, yaxis_title='Average Deep Sleep Percentage (%)', xaxis_title='Days Since Last Workout')
+    fig_deep_sleep_by_layout = go.Layout(
+      showlegend=False,
+      title_x=0.5,
+      yaxis_title='Average Deep Sleep Percentage (%)',
+      xaxis_title='Days Since Last Workout'
+    )
+    fig_deep_sleep_by_days.update_layout(fig_deep_sleep_by_layout)
     st.plotly_chart(fig_deep_sleep_by_days, use_container_width=True)
 
     # Plot 3: Sleep Duration by Previous Day's Activity Type
@@ -841,8 +846,7 @@ def show_sync_page(user):
                 append_activity_data(df_garmin, user['email'])
                 
                 st.success("Data synced successfully!")
-            except GarminConnectException as e:
+            except Exception as e:
                 st.error(f"Failed to sync data from Garmin: {e}")
             except Exception as e:
                 st.error(f"An unexpected error occurred: {e}")
-
