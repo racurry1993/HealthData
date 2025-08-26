@@ -342,8 +342,7 @@ def map_goal_type_to_column(goal_type_str):
         "deep sleep %": "deepSleepPercentage",
         "deep sleep percentage": "deepSleepPercentage",
         "body battery": "bodyBatteryMostRecentValue",
-        "deep sleephours": "deepSleepHours", # Added for the new heatmap request
-        # add more mappings as needed
+        "deep sleephours": "deepSleepHours",
     }
     return mapping.get(s, None)
 
@@ -396,36 +395,9 @@ def generate_llm_insights(summary_dict, cluster_summary_text, goals_list, viewer
         return f"LLM call failed or not configured: {e}"
 
 # ==========================================================
-# UI: Login / Registration
+# UI: Core pages and helpers (defined BEFORE they are called)
 # ==========================================================
-def login_panel():
-    st.sidebar.title("Sign in / Register")
-    email = st.sidebar.text_input("Email", value="", placeholder="your@email.com")
-    role_choice = st.sidebar.selectbox("Register as (if new)", ["user", "coach"])
-    btn = st.sidebar.button("Login / Register")
-    if btn:
-        if not email:
-            st.sidebar.error("Please enter an email")
-            return None
-        users = read_users()
-        if not users.empty and (users['email'] == email).any():
-            user_row = users[users['email'] == email].iloc[0].to_dict()
-            st.sidebar.success(f"Welcome back: {email} ({user_row.get('role')})")
-            return user_row
-        else:
-            append_user_row(email, role=role_choice)
-            st.sidebar.success(f"Registered {email} as {role_choice}. Re-click login to load profile.")
-            return {"email": email, "role": role_choice, "linked_coach_email": "", "certified_coach": False}
-    return None
 
-# After login, the login form will disappear and the fetch data button will appear
-if 'logged_in' in st.session_state and st.session_state.logged_in:
-    st.sidebar.button("Fetch Data")
-    # Add your fetch data logic here
-
-# ==========================================================
-# UI: Core pages and helpers
-# ==========================================================
 def show_overview_page(user):
     st.title("My Dashboard")
     st.subheader("Overview")
@@ -435,20 +407,20 @@ def show_overview_page(user):
         return
 
     # Convert relevant columns to numeric, coercing errors
-    for col in ['totalSteps', 'restingHeartRate', 'deepSleepHours', 'sleepTimeHours', 'ActivityPerformedToday', 'deepSleepPercentage', 'remSleepPercentage', 'ActivityType']:
+    for col in ['totalSteps', 'restingHeartRate', 'deepSleepHours', 'sleepTimeHours', 'deepSleepPercentage', 'remSleepPercentage']:
         if col in df.columns:
-            if col == 'ActivityPerformedToday':
-                df[col] = df[col].astype(bool)
-            else:
-                df[col] = pd.to_numeric(df[col], errors='coerce')
+            df[col] = pd.to_numeric(df[col], errors='coerce')
+    # Convert `ActivityPerformedToday` to boolean
+    if 'ActivityPerformedToday' in df.columns:
+        df['ActivityPerformedToday'] = df['ActivityPerformedToday'].astype(bool)
 
     # KPIs
     kpi_cols = []
-    if 'totalSteps' in df.columns:
+    if 'totalSteps' in df.columns and not df['totalSteps'].isnull().all():
         kpi_cols.append(("Avg Daily Steps", df['totalSteps'].mean()))
-    if 'restingHeartRate' in df.columns:
+    if 'restingHeartRate' in df.columns and not df['restingHeartRate'].isnull().all():
         kpi_cols.append(("Avg Resting HR", df['restingHeartRate'].mean()))
-    if 'sleepTimeHours' in df.columns:
+    if 'sleepTimeHours' in df.columns and not df['sleepTimeHours'].isnull().all():
         kpi_cols.append(("Avg Sleep (hrs)", df['sleepTimeHours'].mean()))
     cols = st.columns(len(kpi_cols) if kpi_cols else 1)
     for i, (label, val) in enumerate(kpi_cols):
@@ -457,145 +429,153 @@ def show_overview_page(user):
 
     st.markdown("---")
     st.subheader("Daily Activity Heatmap")
-    heatmap_data_cols = ['totalSteps', 'restingHeartRate', 'deepSleepHours']
-    if any(col in df.columns for col in heatmap_data_cols):
+    heatmap_data_cols = ['totalSteps', 'restingHeartRate', 'deepSleepHours', 'sleepTimeHours', 'deepSleepPercentage']
+    available_metrics = [col for col in heatmap_data_cols if col in df.columns and not df[col].isnull().all()]
+    if available_metrics:
         df_heatmap = df.copy()
-        df_heatmap['DayOfWeek'] = df_heatmap['Date'].dt.day_name()
-        df_heatmap['Week'] = df_heatmap['Date'].dt.isocalendar().week.astype(int)
-        df_heatmap['Month'] = df_heatmap['Date'].dt.strftime('%Y-%m')
-
-        # Drop rows where all heatmap metrics are NaN
-        df_heatmap.dropna(subset=heatmap_data_cols, how='all', inplace=True)
-
-        if not df_heatmap.empty:
-            metric_choice = st.selectbox(
-                "Select metric for heatmap:",
-                ["totalSteps", "restingHeartRate", "deepSleepHours", "sleepTimeHours", "deepSleepPercentage"]
-            )
-            
-            # Map selected metric to title
-            title_map = {
-                "totalSteps": "Total Steps",
-                "restingHeartRate": "Resting Heart Rate",
-                "deepSleepHours": "Deep Sleep Hours",
-                "sleepTimeHours": "Total Sleep Hours",
-                "deepSleepPercentage": "Deep Sleep %"
-            }
-            
-            # Use 'viridis' for metrics where higher is better, 'inferno' for lower is better
-            color_scale = "viridis" if metric_choice in ["totalSteps", "deepSleepHours", "sleepTimeHours", "deepSleepPercentage"] else "inferno"
-
-            fig = px.treemap(
-                df_heatmap,
-                path=['Month', 'DayOfWeek'],
-                values=metric_choice,
-                color=metric_choice,
-                color_continuous_scale=color_scale,
-                title=f'{title_map[metric_choice]} by Day of Week and Month'
-            )
-            fig.update_layout(height=400)
-            st.plotly_chart(fig, use_container_width=True)
+        df_heatmap['Date'] = pd.to_datetime(df_heatmap['Date'])
+        
+        metric_choice = st.selectbox(
+            "Select metric for heatmap:",
+            available_metrics
+        )
+        
+        # Map selected metric to title
+        title_map = {
+            "totalSteps": "Total Steps",
+            "restingHeartRate": "Resting Heart Rate",
+            "deepSleepHours": "Deep Sleep Hours",
+            "sleepTimeHours": "Total Sleep Hours",
+            "deepSleepPercentage": "Deep Sleep %"
+        }
+        
+        df_pivot = df_heatmap.pivot_table(
+            index=df_heatmap['Date'].dt.isocalendar().week,
+            columns=df_heatmap['Date'].dt.day_name(),
+            values=metric_choice
+        )
+        # Reorder columns to be Mon-Sun
+        days_order = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
+        df_pivot = df_pivot.reindex(columns=days_order)
+        
+        fig = go.Figure(data=go.Heatmap(
+            z=df_pivot.values,
+            x=df_pivot.columns.tolist(),
+            y=df_pivot.index.tolist(),
+            colorscale='Viridis' if metric_choice in ["totalSteps", "deepSleepHours", "sleepTimeHours", "deepSleepPercentage"] else 'Inferno',
+            showscale=True
+        ))
+        
+        fig.update_layout(
+            title=f'{title_map[metric_choice]} by Day of Week and Week of Year',
+            xaxis_title="Day of Week",
+            yaxis_title="Week of Year",
+            yaxis_autorange='reversed'
+        )
+        st.plotly_chart(fig, use_container_width=True)
+    else:
+        st.info("Not enough data to create the heatmap.")
 
     st.markdown("---")
     st.subheader("Sleep and Workout Impact Analysis")
 
     # --- Analysis 1: Impact of ActivityPerformedToday on Sleep ---
-    sleep_metrics = ['sleepTimeHours', 'deepSleepHours', 'remSleepHours', 'deepSleepPercentage', 'remSleepPercentage']
-    
-    # Prepare data for new charts
     df_cleaned = df.copy()
-    df_cleaned['ActivityPerformedToday'] = df_cleaned['ActivityPerformedToday'].astype(bool)
-
-    # Filter out days with no prior workout (where daysSinceLastWorkout is NaN)
-    df_analyzed = df_cleaned.dropna(subset=['daysSinceLastWorkout']).copy()
-    df_analyzed['daysSinceLastWorkout_group'] = df_analyzed['daysSinceLastWorkout'].apply(
-        lambda x: '0 (Workout Day)' if x == 0 else ('1' if x == 1 else ('2' if x == 2 else '3+'))
-    )
-    group_order = ['0 (Workout Day)', '1', '2', '3+']
-    df_analyzed['daysSinceLastWorkout_group'] = pd.Categorical(df_analyzed['daysSinceLastWorkout_group'], categories=group_order, ordered=True)
-
-    # Prepare data for Analysis 3
-    activity_cols_for_merge = ['Date', 'activityType']
-    df_next_day_activity = df_cleaned[activity_cols_for_merge + ['ActivityPerformedToday']].copy()
-    df_next_day_activity['Date_plus_1'] = df_next_day_activity['Date'] + pd.Timedelta(days=1)
-    left_df = df_next_day_activity[df_next_day_activity['ActivityPerformedToday']].rename(columns={'Date': 'ActivityDate'})
-    right_df = df_cleaned[['Date'] + sleep_metrics].rename(columns={'Date': 'NextDaySleepDate'})
-    df_activity_impact = pd.merge(
-        left_df,
-        right_df,
-        left_on='Date_plus_1',
-        right_on='NextDaySleepDate',
-        how='inner'
-    )
-    df_activity_impact_filtered = df_activity_impact[df_activity_impact['activityType'] != 'No Activity']
-
-
-    # Plot 1: Average Sleep Duration by Workout Day
-    st.subheader("Average Sleep Duration by Workout Day")
-    grouped_sleep_by_workout = df_cleaned.groupby('ActivityPerformedToday')['sleepTimeHours'].mean().reset_index()
-    fig_sleep_by_workout = px.bar(
-        grouped_sleep_by_workout,
-        x='ActivityPerformedToday',
-        y='sleepTimeHours',
-        labels={'ActivityPerformedToday': 'Workout Performed Today', 'sleepTimeHours': 'Average Sleep Time (Hours)'},
-        color='ActivityPerformedToday',
-        color_discrete_map={True: '#4285F4', False: '#DB4437'}
-    )
-    fig_sleep_by_workout.update_xaxes(tickvals=[0, 1], ticktext=['No Workout', 'Workout'])
-    fig_sleep_by_workout.update_layout(showlegend=False, title_x=0.5, yaxis_title='Average Sleep Time (Hours)', xaxis_title='Workout Performed Today')
-    st.plotly_chart(fig_sleep_by_workout, use_container_width=True)
+    if 'ActivityPerformedToday' in df_cleaned.columns and 'sleepTimeHours' in df_cleaned.columns:
+        grouped_sleep_by_workout = df_cleaned.groupby('ActivityPerformedToday')['sleepTimeHours'].mean().reset_index()
+        fig_sleep_by_workout = px.bar(
+            grouped_sleep_by_workout,
+            x='ActivityPerformedToday',
+            y='sleepTimeHours',
+            labels={'ActivityPerformedToday': 'Workout Performed Today', 'sleepTimeHours': 'Average Sleep Time (Hours)'},
+            color='ActivityPerformedToday',
+            color_discrete_map={True: '#4285F4', False: '#DB4437'}
+        )
+        fig_sleep_by_workout.update_xaxes(tickvals=[0, 1], ticktext=['No Workout', 'Workout'])
+        fig_sleep_by_workout.update_layout(showlegend=False, title_x=0.5, yaxis_title='Average Sleep Time (Hours)', xaxis_title='Workout Performed Today')
+        st.plotly_chart(fig_sleep_by_workout, use_container_width=True)
+    else:
+        st.info("Not enough data to analyze sleep impact by workout.")
 
     # Plot 2: Deep Sleep Percentage by Days Since Last Workout
-    st.subheader("Average Deep Sleep Percentage by Days Since Last Workout")
-    grouped_deep_sleep_by_days = df_analyzed.groupby('daysSinceLastWorkout_group')['deepSleepPercentage'].mean().reset_index()
-    fig_deep_sleep_by_days = px.bar(
-        grouped_deep_sleep_by_days,
-        x='daysSinceLastWorkout_group',
-        y='deepSleepPercentage',
-        labels={'daysSinceLastWorkout_group': 'Days Since Last Workout', 'deepSleepPercentage': 'Average Deep Sleep Percentage (%)'},
-        color='daysSinceLastWorkout_group'
-    )
-    fig_deep_sleep_by_layout = go.Layout(
-      showlegend=False,
-      title_x=0.5,
-      yaxis_title='Average Deep Sleep Percentage (%)',
-      xaxis_title='Days Since Last Workout'
-    )
-    fig_deep_sleep_by_days.update_layout(fig_deep_sleep_by_layout)
-    st.plotly_chart(fig_deep_sleep_by_days, use_container_width=True)
+    df_analyzed = df_cleaned.dropna(subset=['daysSinceLastWorkout']).copy()
+    if not df_analyzed.empty and 'deepSleepPercentage' in df_analyzed.columns:
+        df_analyzed['daysSinceLastWorkout_group'] = df_analyzed['daysSinceLastWorkout'].apply(
+            lambda x: '0 (Workout Day)' if x == 0 else ('1' if x == 1 else ('2' if x == 2 else '3+'))
+        )
+        group_order = ['0 (Workout Day)', '1', '2', '3+']
+        df_analyzed['daysSinceLastWorkout_group'] = pd.Categorical(df_analyzed['daysSinceLastWorkout_group'], categories=group_order, ordered=True)
+        
+        grouped_deep_sleep_by_days = df_analyzed.groupby('daysSinceLastWorkout_group')['deepSleepPercentage'].mean().reset_index()
+        fig_deep_sleep_by_days = px.bar(
+            grouped_deep_sleep_by_days,
+            x='daysSinceLastWorkout_group',
+            y='deepSleepPercentage',
+            labels={'daysSinceLastWorkout_group': 'Days Since Last Workout', 'deepSleepPercentage': 'Average Deep Sleep Percentage (%)'},
+            color='daysSinceLastWorkout_group'
+        )
+        fig_deep_sleep_by_layout = go.Layout(
+          showlegend=False,
+          title_x=0.5,
+          yaxis_title='Average Deep Sleep Percentage (%)',
+          xaxis_title='Days Since Last Workout'
+        )
+        fig_deep_sleep_by_days.update_layout(fig_deep_sleep_by_layout)
+        st.plotly_chart(fig_deep_sleep_by_days, use_container_width=True)
+    else:
+        st.info("Not enough data to analyze deep sleep by days since last workout.")
 
     # Plot 3: Sleep Duration by Previous Day's Activity Type
-    if not df_activity_impact_filtered.empty:
-        st.subheader("Average Sleep Duration by Previous Day's Activity Type")
-        grouped_impact_by_type = df_activity_impact_filtered.groupby('activityType')['sleepTimeHours'].mean().reset_index()
-        fig_impact_by_type = px.bar(
-            grouped_impact_by_type,
-            x='activityType',
-            y='sleepTimeHours',
-            labels={'activityType': 'Previous Day\'s Activity Type', 'sleepTimeHours': 'Average Sleep Time (Hours)'},
-            color='activityType'
+    if 'ActivityPerformedToday' in df_cleaned.columns and 'activityType' in df_cleaned.columns and 'sleepTimeHours' in df_cleaned.columns:
+        activity_cols_for_merge = ['Date', 'activityType']
+        df_next_day_activity = df_cleaned[activity_cols_for_merge + ['ActivityPerformedToday']].copy()
+        df_next_day_activity['Date_plus_1'] = df_next_day_activity['Date'] + pd.Timedelta(days=1)
+        left_df = df_next_day_activity[df_next_day_activity['ActivityPerformedToday']].rename(columns={'Date': 'ActivityDate'})
+        right_df = df_cleaned[['Date', 'sleepTimeHours']].rename(columns={'Date': 'NextDaySleepDate'})
+        df_activity_impact = pd.merge(
+            left_df,
+            right_df,
+            left_on='Date_plus_1',
+            right_on='NextDaySleepDate',
+            how='inner'
         )
-        fig_impact_by_type.update_layout(showlegend=False, title_x=0.5, yaxis_title='Average Sleep Time (Hours)', xaxis_title='Previous Day\'s Activity Type')
-        st.plotly_chart(fig_impact_by_type, use_container_width=True)
-    else:
-        st.info("No activity data for analysis on previous day's impact.")
+        df_activity_impact_filtered = df_activity_impact[df_activity_impact['activityType'] != 'No Activity']
+        if not df_activity_impact_filtered.empty:
+            st.subheader("Average Sleep Duration by Previous Day's Activity Type")
+            grouped_impact_by_type = df_activity_impact_filtered.groupby('activityType')['sleepTimeHours'].mean().reset_index()
+            fig_impact_by_type = px.bar(
+                grouped_impact_by_type,
+                x='activityType',
+                y='sleepTimeHours',
+                labels={'activityType': 'Previous Day\'s Activity Type', 'sleepTimeHours': 'Average Sleep Time (Hours)'},
+                color='activityType'
+            )
+            fig_impact_by_type.update_layout(showlegend=False, title_x=0.5, yaxis_title='Average Sleep Time (Hours)', xaxis_title='Previous Day\'s Activity Type')
+            st.plotly_chart(fig_impact_by_type, use_container_width=True)
+        else:
+            st.info("No activity data for analysis on previous day's impact.")
     
-    # Plot 4: Variance by Days Since Last Workout Group (converted to Day of Week)
-    st.subheader("Variance between Total Sleep and Deep Sleep % by Day of Week")
-    df_analyzed['day_of_week'] = pd.Categorical(df_analyzed['Date'].dt.day_name(), categories=['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'], ordered=True)
-    df_grouped_days_since = df_analyzed.groupby('day_of_week')[['sleepTimeHours', 'deepSleepPercentage']].mean()
-    df_grouped_days_since['variance_score'] = (df_grouped_days_since['sleepTimeHours'] - df_grouped_days_since['deepSleepPercentage'] / 10).abs() # Scale deep sleep % for comparison
-    fig_variance = px.bar(
-        df_grouped_days_since.reset_index(),
-        x='day_of_week',
-        y='variance_score',
-        labels={'day_of_week': 'Day of Week', 'variance_score': 'Variance Score (lower is better)'},
-        color='variance_score',
-        color_continuous_scale='viridis'
-    )
-    fig_variance.update_layout(title_x=0.5, yaxis_title='Variance Score', xaxis_title='Day of Week')
-    st.plotly_chart(fig_variance, use_container_width=True)
-
+    # Plot 4: Variance by Day of Week
+    if 'Date' in df_cleaned.columns and 'sleepTimeHours' in df_cleaned.columns and 'deepSleepPercentage' in df_cleaned.columns:
+        st.subheader("Variance between Total Sleep and Deep Sleep % by Day of Week")
+        df_cleaned['day_of_week'] = pd.Categorical(df_cleaned['Date'].dt.day_name(), categories=['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'], ordered=True)
+        df_grouped_days_since = df_cleaned.groupby('day_of_week')[['sleepTimeHours', 'deepSleepPercentage']].mean()
+        if not df_grouped_days_since.empty:
+            df_grouped_days_since['variance_score'] = (df_grouped_days_since['sleepTimeHours'] - df_grouped_days_since['deepSleepPercentage'] / 10).abs() # Scale deep sleep % for comparison
+            fig_variance = px.bar(
+                df_grouped_days_since.reset_index(),
+                x='day_of_week',
+                y='variance_score',
+                labels={'day_of_week': 'Day of Week', 'variance_score': 'Variance Score (lower is better)'},
+                color='variance_score',
+                color_continuous_scale='viridis'
+            )
+            fig_variance.update_layout(title_x=0.5, yaxis_title='Variance Score', xaxis_title='Day of Week')
+            st.plotly_chart(fig_variance, use_container_width=True)
+        else:
+            st.info("Not enough data to calculate variance.")
+    else:
+        st.info("Missing required data to calculate variance.")
 
 def show_insights_page(user):
     st.title("Insights & Forecasts")
@@ -630,9 +610,12 @@ def show_insights_page(user):
                     metric_col = map_goal_type_to_column(goal_type)
                     if metric_col and metric_col in df.columns:
                         cur_val = df[metric_col].iloc[-1] if not df.empty else None
-                        start_value = float(g.get('start_value')) if g.get('start_value') else None
-                        target_value = float(g.get('target_value')) if g.get('target_value') else None
-                        target_date = pd.to_datetime(g.get('target_date')) if g.get('target_date') else None
+                        try:
+                            start_value = float(g.get('start_value')) if g.get('start_value') else None
+                            target_value = float(g.get('target_value')) if g.get('target_value') else None
+                            target_date = pd.to_datetime(g.get('target_date')) if g.get('target_date') else None
+                        except (ValueError, TypeError):
+                            start_value, target_value, target_date = None, None, None
 
                         if cur_val is not None and start_value is not None and target_value is not None and target_date is not None:
                             forecast_val, _ = forecast_metric_on_date(df, metric_col, target_date)
@@ -671,7 +654,7 @@ def show_insights_page(user):
     metrics_to_plot = ['totalSteps', 'sleepTimeHours']
 
     for metric in metrics_to_plot:
-        if metric in df_ts.columns:
+        if metric in df_ts.columns and not df_ts[metric].isnull().all():
             st.write(f"### {metric.replace('totalSteps', 'Total Steps').replace('sleepTimeHours', 'Total Sleep Hours')}")
             
             # Prepare data and calculate rolling average
@@ -693,8 +676,9 @@ def show_insights_page(user):
                                      line=dict(color='blue', width=2)))
 
             # Add forecast line
-            fig.add_trace(go.Scatter(x=forecast_df['Date'], y=forecast_df['rolling_mean_7'], mode='lines', name='30-Day Forecast',
-                                     line=dict(color='red', width=2, dash='dash')))
+            if not forecast_df.empty:
+                fig.add_trace(go.Scatter(x=forecast_df['Date'], y=forecast_df['rolling_mean_7'], mode='lines', name='30-Day Forecast',
+                                         line=dict(color='red', width=2, dash='dash')))
 
             fig.update_layout(
                 title=f"7-Day Rolling Average & 30-Day Forecast for {metric.replace('totalSteps', 'Total Steps').replace('sleepTimeHours', 'Total Sleep Hours')}",
@@ -704,6 +688,8 @@ def show_insights_page(user):
             )
             
             st.plotly_chart(fig, use_container_width=True)
+        else:
+            st.info(f"Not enough data for the {metric.replace('totalSteps', 'Total Steps').replace('sleepTimeHours', 'Total Sleep Hours')} chart.")
 
     st.markdown("---")
     st.subheader("Goal Progress & Forecast")
@@ -722,53 +708,16 @@ def show_insights_page(user):
         forecast_success = g.get('forecast_success', 'N/A')
         
         progress_bar_color = "green" if progress_pct >= 100 else "blue"
-        st.progress(min(progress_pct / 100, 1.0))
-        st.write(f"Progress: **{progress_pct:.2f}%**")
+        st.progress(min(float(progress_pct) / 100, 1.0))
+        st.write(f"Progress: **{float(progress_pct):.2f}%**")
         
         if forecast_val != "N/A" and forecast_val != "":
             forecast_status = "On Track" if forecast_success == 'True' else "Off Track"
-            st.markdown(f"Forecasted Value on Target Date: **{forecast_val:.2f}** ({forecast_status})")
+            st.markdown(f"Forecasted Value on Target Date: **{float(forecast_val):.2f}** ({forecast_status})")
         else:
             st.markdown("Forecast Not Available (Not enough data yet)")
 
 
-# --- Main App Logic ---
-# Global state management
-if 'logged_in' not in st.session_state:
-    st.session_state.logged_in = False
-if 'user_profile' not in st.session_state:
-    st.session_state.user_profile = None
-
-# Sidebar login
-user_profile = login_panel()
-if user_profile:
-    st.session_state.logged_in = True
-    st.session_state.user_profile = user_profile
-
-# Main content
-if st.session_state.logged_in:
-    # Tab navigation
-    tab_overview, tab_goals, tab_insights, tab_sync = st.tabs(["Dashboard", "My Goals", "Insights", "Sync Garmin Data"])
-    
-    with tab_overview:
-        show_overview_page(st.session_state.user_profile)
-    
-    with tab_goals:
-        show_goals_page(st.session_state.user_profile)
-    
-    with tab_insights:
-        show_insights_page(st.session_state.user_profile)
-        
-    with tab_sync:
-        show_sync_page(st.session_state.user_profile)
-
-else:
-    st.title("Welcome to Garmin Coach Dashboard")
-    st.info("Please log in or register using the sidebar to continue.")
-
-# ==========================================================
-# UI: Goals Page (stub - you can add logic here)
-# ==========================================================
 def show_goals_page(user):
     st.title("My Goals")
     st.write("This section is where you can view and set your goals.")
@@ -809,9 +758,7 @@ def show_goals_page(user):
             append_goal_row(goal_row)
             st.success("Goal created successfully!")
 
-# ==========================================================
-# UI: Sync Page (stub - you can add logic here)
-# ==========================================================
+
 def show_sync_page(user):
     st.title("Garmin Data Sync")
     st.write("Sync your data directly from Garmin Connect.")
@@ -848,5 +795,60 @@ def show_sync_page(user):
                 st.success("Data synced successfully!")
             except Exception as e:
                 st.error(f"Failed to sync data from Garmin: {e}")
-            except Exception as e:
-                st.error(f"An unexpected error occurred: {e}")
+
+# ==========================================================
+# UI: Login / Registration
+# ==========================================================
+def login_panel():
+    st.sidebar.title("Sign in / Register")
+    email = st.sidebar.text_input("Email", value="", placeholder="your@email.com")
+    role_choice = st.sidebar.selectbox("Register as (if new)", ["user", "coach"])
+    btn = st.sidebar.button("Login / Register")
+    if btn:
+        if not email:
+            st.sidebar.error("Please enter an email")
+            return None
+        users = read_users()
+        if not users.empty and (users['email'] == email).any():
+            user_row = users[users['email'] == email].iloc[0].to_dict()
+            st.sidebar.success(f"Welcome back: {email} ({user_row.get('role')})")
+            return user_row
+        else:
+            append_user_row(email, role=role_choice)
+            st.sidebar.success(f"Registered {email} as {role_choice}. Re-click login to load profile.")
+            return {"email": email, "role": role_choice, "linked_coach_email": "", "certified_coach": False}
+    return None
+
+# --- Main App Logic ---
+# Global state management
+if 'logged_in' not in st.session_state:
+    st.session_state.logged_in = False
+if 'user_profile' not in st.session_state:
+    st.session_state.user_profile = None
+
+# Sidebar login
+user_profile = login_panel()
+if user_profile:
+    st.session_state.logged_in = True
+    st.session_state.user_profile = user_profile
+
+# Main content
+if st.session_state.logged_in:
+    # Tab navigation
+    tab_overview, tab_goals, tab_insights, tab_sync = st.tabs(["Dashboard", "My Goals", "Insights", "Sync Garmin Data"])
+    
+    with tab_overview:
+        show_overview_page(st.session_state.user_profile)
+    
+    with tab_goals:
+        show_goals_page(st.session_state.user_profile)
+    
+    with tab_insights:
+        show_insights_page(st.session_state.user_profile)
+        
+    with tab_sync:
+        show_sync_page(st.session_state.user_profile)
+
+else:
+    st.title("Welcome to Garmin Coach Dashboard")
+    st.info("Please log in or register using the sidebar to continue.")
