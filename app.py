@@ -501,43 +501,45 @@ def show_overview_page(user):
             
             # --- Plot sleep metrics relative to activity days ---
             st.subheader("Sleep Patterns Relative to Activity Days vs. Overall Average")
-            activity_dates = df_sleep_activity_filtered[df_sleep_activity_filtered['ActivityPerformedToday'] == True]['Date'].unique()
             
-            # Calculate overall averages - MUST be from the filtered data
-            overall_avg_deep_sleep = df_sleep_activity_filtered['deepSleepHours'].mean()
-            overall_avg_total_sleep = df_sleep_activity_filtered['sleepTimeHours'].mean()
+            # Filter to only the dates with an activity performed
+            activity_dates = df_sleep_activity_filtered[df_sleep_activity_filtered['ActivityPerformedToday'] == True]['Date'].unique()
+
+            # Create a dictionary to hold dates for each category
+            category_dates = {
+                'Day Of Activity': [],
+                'Day Of Activity + 1': [],
+                'Day Of Activity + 2': [],
+                'Day Of Activity + 3+': []
+            }
+
+            for adate in activity_dates:
+                base_date = pd.to_datetime(adate)
+                category_dates['Day Of Activity'].append(base_date)
+                category_dates['Day Of Activity + 1'].append(base_date + timedelta(days=1))
+                category_dates['Day Of Activity + 2'].append(base_date + timedelta(days=2))
+                category_dates['Day Of Activity + 3+'].extend([base_date + timedelta(days=i) for i in range(3, 8)]) # Extend for a broader '3+' category
+
+            # Convert to sets to get unique dates and avoid duplicates
+            unique_category_dates = {
+                cat: set(dates) for cat, dates in category_dates.items()
+            }
+
+            # Filter out overlapping dates from the earlier categories
+            unique_category_dates['Day Of Activity + 1'] -= unique_category_dates['Day Of Activity']
+            unique_category_dates['Day Of Activity + 2'] -= unique_category_dates['Day Of Activity + 1'] | unique_category_dates['Day Of Activity']
+            unique_category_dates['Day Of Activity + 3+'] -= unique_category_dates['Day Of Activity + 2'] | unique_category_dates['Day Of Activity + 1'] | unique_category_dates['Day Of Activity']
 
             # Create a list to store data for plotting
             sleep_analysis_data = []
 
-            for date_offset in range(4): # Day 0 (activity), Day +1, Day +2, Day >=3
-                temp_dates = set() # Use a set to store unique dates to avoid duplicates
-                if date_offset == 0:
-                    for adate in activity_dates:
-                        temp_dates.add(pd.to_datetime(adate))
-                    day_label = "Day Of Activity"
-                elif date_offset == 1:
-                    for adate in activity_dates:
-                        temp_dates.add(pd.to_datetime(adate) + timedelta(days=1))
-                    day_label = "Day Of Activity + 1"
-                elif date_offset == 2:
-                    for adate in activity_dates:
-                        temp_dates.add(pd.to_datetime(adate) + timedelta(days=2))
-                    day_label = "Day Of Activity + 2"
-                else: # date_offset >= 3
-                    for adate in activity_dates:
-                        for i in range(3, 8): # consider up to 7 days after activity to give a broader ">=3" category
-                            temp_dates.add(pd.to_datetime(adate) + timedelta(days=i))
-                    day_label = "Day Of Activity >= 3"
-                
-                # Filter sleep data for these temp_dates
-                temp_df = df_sleep_activity_filtered[df_sleep_activity_filtered['Date'].isin(list(temp_dates))].copy()
-                
-                if not temp_df.empty:
+            for category, dates in unique_category_dates.items():
+                if dates:
+                    temp_df = df_sleep_activity_filtered[df_sleep_activity_filtered['Date'].isin(list(dates))].copy()
                     avg_deep_sleep = temp_df['deepSleepHours'].mean()
                     avg_total_sleep = temp_df['sleepTimeHours'].mean()
                     sleep_analysis_data.append({
-                        'Day Category': day_label,
+                        'Day Category': category,
                         'Average Deep Sleep Hours': avg_deep_sleep,
                         'Average Total Sleep Hours': avg_total_sleep
                     })
@@ -545,8 +547,12 @@ def show_overview_page(user):
             if sleep_analysis_data:
                 df_sleep_correlation = pd.DataFrame(sleep_analysis_data)
                 
+                # Calculate overall averages - MUST be from the filtered data
+                overall_avg_deep_sleep = df_sleep_activity_filtered['deepSleepHours'].mean()
+                overall_avg_total_sleep = df_sleep_activity_filtered['sleepTimeHours'].mean()
+
                 # Order for plotting
-                day_category_order = ["Day Of Activity", "Day Of Activity + 1", "Day Of Activity + 2", "Day Of Activity >= 3"]
+                day_category_order = ["Day Of Activity", "Day Of Activity + 1", "Day Of Activity + 2", "Day Of Activity + 3+"]
                 df_sleep_correlation['Day Category'] = pd.Categorical(df_sleep_correlation['Day Category'], categories=day_category_order, ordered=True)
                 df_sleep_correlation = df_sleep_correlation.sort_values('Day Category')
 
