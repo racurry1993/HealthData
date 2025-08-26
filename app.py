@@ -764,35 +764,32 @@ def show_sync_page(user):
     st.title("Garmin Data Sync")
     st.write("Sync your data directly from Garmin Connect.")
     
-    if st.secrets.get("garmin_username") and st.secrets.get("garmin_password"):
-        sync_btn = st.button("Sync Data")
-        if sync_btn:
-            with st.spinner("Fetching data from Garmin..."):
-                try:
-                    # Add Garmin login logic here
-                    client = Garmin(
-                        st.secrets["garmin_username"],
-                        st.secrets["garmin_password"]
-                    )
-                    client.login()
-                    
-                    # Fetch data for the last 90 days
-                    today = datetime.date.today()
-                    start_date = today - timedelta(days=90)
-                    
-                    activities = client.get_activities_by_date(start_date.isoformat(), today.isoformat())
-                    
-                    # Preprocess data using the provided function
-                    df_garmin = preprocessing_garmin_data(activities, start_date)
-                    
-                    # Append to Google Sheets
-                    append_activity_data(df_garmin, user['email'])
-                    
-                    st.success("Data synced successfully!")
-                except Exception as e:
-                    st.error(f"Failed to sync data from Garmin: {e}")
-    else:
-        st.warning("To sync data, you must provide your Garmin username and password in Streamlit secrets.")
+    sync_btn = st.button("Sync Data")
+    if sync_btn:
+        with st.spinner("Fetching data from Garmin..."):
+            try:
+                # Add Garmin login logic here
+                client = Garmin(
+                    st.session_state.garmin_username,
+                    st.session_state.garmin_password
+                )
+                client.login()
+                
+                # Fetch data for the last 90 days
+                today = datetime.date.today()
+                start_date = today - timedelta(days=90)
+                
+                activities = client.get_activities_by_date(start_date.isoformat(), today.isoformat())
+                
+                # Preprocess data using the provided function
+                df_garmin = preprocessing_garmin_data(activities, start_date)
+                
+                # Append to Google Sheets
+                append_activity_data(df_garmin, user['email'])
+                
+                st.success("Data synced successfully!")
+            except Exception as e:
+                st.error(f"Failed to sync data from Garmin: {e}")
 
 
 # ==========================================================
@@ -805,28 +802,49 @@ if 'user_profile' not in st.session_state:
     st.session_state.user_profile = None
 
 # Sidebar login
-st.sidebar.title("Sign in / Register")
-email = st.sidebar.text_input("Email", value="", placeholder="your@email.com")
-role_choice = st.sidebar.selectbox("Register as (if new)", ["user", "coach"])
-btn = st.sidebar.button("Login / Register")
+st.sidebar.title("Login to Garmin")
+if not st.session_state.logged_in:
+    with st.sidebar.form("garmin_login_form"):
+        email = st.text_input("Garmin Email", value="", placeholder="your@email.com")
+        password = st.text_input("Garmin Password", type="password", placeholder="your password")
+        role_choice = st.selectbox("Register as (if new)", ["user", "coach"])
+        submitted = st.form_submit_button("Login / Register")
+        
+        if submitted:
+            if not email or not password:
+                st.error("Please enter both email and password.")
+            else:
+                with st.spinner("Authenticating with Garmin..."):
+                    try:
+                        client = Garmin(email, password)
+                        client.login()
+                        st.session_state.garmin_username = email
+                        st.session_state.garmin_password = password
+                        
+                        # Authentication successful, now proceed with app logic
+                        users = read_users()
+                        if not users.empty and (users['email'] == email).any():
+                            user_row = users[users['email'] == email].iloc[0].to_dict()
+                            st.session_state.user_profile = user_row
+                            st.success(f"Welcome back, {email} ({user_row.get('role')})!")
+                        else:
+                            append_user_row(email, role=role_choice)
+                            st.session_state.user_profile = {"email": email, "role": role_choice, "linked_coach_email": "", "certified_coach": False}
+                            st.success(f"Registered {email} as {role_choice}. You are now logged in.")
+                            
+                        st.session_state.logged_in = True
+                        st.rerun()
 
-if btn:
-    if not email:
-        st.sidebar.error("Please enter an email")
-    else:
-        users = read_users()
-        if not users.empty and (users['email'] == email).any():
-            user_row = users[users['email'] == email].iloc[0].to_dict()
-            st.session_state.logged_in = True
-            st.session_state.user_profile = user_row
-            st.sidebar.success(f"Welcome back, {email} ({user_row.get('role')})!")
-        else:
-            append_user_row(email, role=role_choice)
-            st.session_state.logged_in = True
-            st.session_state.user_profile = {"email": email, "role": role_choice, "linked_coach_email": "", "certified_coach": False}
-            st.sidebar.success(f"Registered {email} as {role_choice}. You are now logged in.")
-    # Rerun the app to update the main content based on the new session state
-    st.experimental_rerun()
+                    except Exception as e:
+                        st.error(f"Failed to authenticate with Garmin. Please check your credentials. Error: {e}")
+else:
+    st.sidebar.success(f"Logged in as {st.session_state.user_profile['email']}")
+    if st.sidebar.button("Logout"):
+        st.session_state.logged_in = False
+        st.session_state.user_profile = None
+        st.session_state.pop('garmin_username', None)
+        st.session_state.pop('garmin_password', None)
+        st.rerun()
 
 
 # Main content
