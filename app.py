@@ -359,7 +359,7 @@ def generate_llm_insights(summary_dict, cluster_summary_text, goals_list, viewer
     """
     try:
         # Use Streamlit secrets for API key
-        gemini_api_key = st.secrets.get("gemini_api_key")
+        gemini_api_key = 'AIzaSyAiaswXxN3ngfEwMRXckBmEoZHO151jRv0'
         if not gemini_api_key:
             return "LLM key not configured. Add 'gemini_api_key' to Streamlit secrets to enable insights."
         
