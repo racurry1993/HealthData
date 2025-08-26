@@ -378,22 +378,22 @@ def generate_llm_insights(summary_dict, cluster_summary_text, goals_list, viewer
             prompt_blocks.append("Active goals (format: goal_type | start_value | target_value | target_date | progress_pct | forecast_value | forecast_success):")
             for g in goals_list:
                 prompt_blocks.append(f"- {g['goal_type']} | {g.get('start_value','')} | {g.get('target_value','')} | {g.get('target_date','')} | {g.get('progress_pct',0)} | {g.get('forecast_value','')} | {g.get('forecast_success','')}")
-
+        
         tone = "Use encouraging tone, emojis sparingly, and keep it short. Use numeric specifics where possible."
         if viewer_role == "coach":
             tone += " Also include a 1-line coach message for the athlete."
-        
-        prompt = "\n\n".join(prompt_blocks + [tone])
 
+        prompt = "\n\n".join(prompt_blocks + [tone])
+        
         # Use the gemini-2.5-flash-preview-05-20 model for grounded responses
         model = genai.GenerativeModel('gemini-2.5-flash-preview-05-20')
         resp = model.generate_content(prompt)
         
         return resp.text
-
+    
     except Exception as e:
         return f"LLM call failed or not configured: {e}"
-
+        
 # -----------------
 # FIX START
 # -----------------
@@ -406,20 +406,19 @@ def sync_data_from_garmin(api, user_id):
     try:
         # Define the date range for data fetching
         end_date = date.today()
-        start_date = end_date - timedelta(days=90)  # Fetch last 90 days
-
+        start_date = end_date - timedelta(days=90)
+        
         # Fetch activities from Garmin API within the defined date range
         activities = api.get_activities_by_date(start_date.isoformat(), end_date.isoformat())
-
+        
         # Pass the required arguments to the preprocessing function
         new_activity_data = preprocessing_garmin_data(activities, start_date, end_date)
-
+        
         if not new_activity_data.empty:
             st.success(f"Successfully synced {len(new_activity_data)} activities from Garmin.")
             append_activity_data(new_activity_data, user_id)
         else:
             st.warning("No new activities found in the specified date range.")
-
     except Exception as e:
         st.error(f"Failed to sync data from Garmin: {e}")
         st.error("Please check your Garmin Connect credentials and try again.")
@@ -437,9 +436,7 @@ def sync_data_from_garmin(api, user_id):
 def show_overview_page(user):
     st.title("My Dashboard")
     st.subheader("Overview")
-    
     df = read_activity_for_user(user['email'])
-    
     if df.empty:
         st.info("No synced activity data found. Use 'Fetch Data' in the left sidebar to pull from Garmin.")
         return
@@ -448,7 +445,6 @@ def show_overview_page(user):
     for col in ['totalSteps', 'restingHeartRate', 'deepSleepHours', 'sleepTimeHours', 'deepSleepPercentage', 'remSleepPercentage']:
         if col in df.columns:
             df[col] = pd.to_numeric(df[col], errors='coerce')
-
     # Convert `ActivityPerformedToday` to boolean
     if 'ActivityPerformedToday' in df.columns:
         df['ActivityPerformedToday'] = df['ActivityPerformedToday'].astype(bool)
@@ -461,238 +457,425 @@ def show_overview_page(user):
         kpi_cols.append(("Avg Resting HR", df['restingHeartRate'].mean()))
     if 'sleepTimeHours' in df.columns and not df['sleepTimeHours'].isnull().all():
         kpi_cols.append(("Avg Sleep (hrs)", df['sleepTimeHours'].mean()))
-        
     cols = st.columns(len(kpi_cols) if kpi_cols else 1)
     for i, (label, val) in enumerate(kpi_cols):
         with cols[i]:
             st.metric(label=label, value=f"{val:.1f}" if not math.isnan(val) else "N/A")
 
     st.markdown("---")
-
     st.subheader("Daily Activity Heatmap")
-    
-    heatmap_data_cols = ['totalSteps', 'restingHeartRate', 'deepSleepHours', 'sleepTimeHours', 'totalDistanceMeters', 'totalCalories', 'vO2MaxValue', 'activeCalories', 'averageHeartRate', 'maxHeartRate']
-    
-    metrics = [col for col in heatmap_data_cols if col in df.columns and not df[col].isnull().all()]
-
-    if not metrics:
-        st.warning("Not enough data to create heatmaps.")
-    else:
-        selected_metric = st.selectbox("Select metric for heatmap:", metrics)
+    heatmap_data_cols = ['totalSteps', 'restingHeartRate', 'deepSleepHours', 'sleepTimeHours', 'deepSleepPercentage']
+    available_metrics = [col for col in heatmap_data_cols if col in df.columns and not df[col].isnull().all()]
+    if available_metrics:
+        df_heatmap = df.copy()
+        df_heatmap['Date'] = pd.to_datetime(df_heatmap['Date'])
         
-        # Resample to daily frequency
-        daily_df = df.set_index('Date')[selected_metric].resample('D').sum().reset_index()
-        daily_df['day_of_week'] = daily_df['Date'].dt.day_name()
-        daily_df['week_of_year'] = daily_df['Date'].dt.isocalendar().week
-        daily_df['year'] = daily_df['Date'].dt.year
+        metric_choice = st.selectbox(
+            "Select metric for heatmap:",
+            available_metrics
+        )
+        
+        # Map selected metric to title
+        title_map = {
+            "totalSteps": "Total Steps",
+            "restingHeartRate": "Resting Heart Rate",
+            "deepSleepHours": "Deep Sleep Hours",
+            "sleepTimeHours": "Total Sleep Hours",
+            "deepSleepPercentage": "Deep Sleep %"
+        }
+        
+        df_pivot = df_heatmap.pivot_table(
+            index=df_heatmap['Date'].dt.isocalendar().week,
+            columns=df_heatmap['Date'].dt.day_name(),
+            values=metric_choice
+        )
+        # Reorder columns to be Mon-Sun
+        days_order = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
+        df_pivot = df_pivot.reindex(columns=days_order)
+        
+        fig = go.Figure(data=go.Heatmap(
+            z=df_pivot.values,
+            x=df_pivot.columns.tolist(),
+            y=df_pivot.index.tolist(),
+            colorscale='Viridis' if metric_choice in ["totalSteps", "deepSleepHours", "sleepTimeHours", "deepSleepPercentage"] else 'Inferno',
+            showscale=True
+        ))
+        
+        fig.update_layout(
+            title=f'{title_map[metric_choice]} by Day of Week and Week of Year',
+            xaxis_title="Day of Week",
+            yaxis_title="Week of Year",
+            yaxis_autorange='reversed'
+        )
+        st.plotly_chart(fig, use_container_width=True)
+    else:
+        st.info("Not enough data to create the heatmap.")
 
-        if not daily_df.empty:
-            fig = go.Figure(data=go.Heatmap(
-                    z=daily_df[selected_metric],
-                    x=daily_df['week_of_year'],
-                    y=daily_df['day_of_week'],
-                    colorscale='Viridis',
-                    hoverongaps=False))
-            fig.update_layout(
-                title=f"Weekly Heatmap for {selected_metric}",
-                xaxis_nticks=36,
-                yaxis={'categoryorder':'array', 'categoryarray':['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']}
+    st.markdown("---")
+    st.subheader("Sleep and Workout Impact Analysis")
+
+    # --- Analysis 1: Impact of ActivityPerformedToday on Sleep ---
+    df_cleaned = df.copy()
+    if 'ActivityPerformedToday' in df_cleaned.columns and 'sleepTimeHours' in df_cleaned.columns:
+        grouped_sleep_by_workout = df_cleaned.groupby('ActivityPerformedToday')['sleepTimeHours'].mean().reset_index()
+        fig_sleep_by_workout = px.bar(
+            grouped_sleep_by_workout,
+            x='ActivityPerformedToday',
+            y='sleepTimeHours',
+            labels={'ActivityPerformedToday': 'Workout Performed Today', 'sleepTimeHours': 'Average Sleep Time (Hours)'},
+            color='ActivityPerformedToday',
+            color_discrete_map={True: '#4285F4', False: '#DB4437'}
+        )
+        fig_sleep_by_workout.update_xaxes(tickvals=[0, 1], ticktext=['No Workout', 'Workout'])
+        fig_sleep_by_workout.update_layout(showlegend=False, title_x=0.5, yaxis_title='Average Sleep Time (Hours)', xaxis_title='Workout Performed Today')
+        st.plotly_chart(fig_sleep_by_workout, use_container_width=True)
+    else:
+        st.info("Not enough data to analyze sleep impact by workout.")
+
+    # Plot 2: Deep Sleep Percentage by Days Since Last Workout
+    df_analyzed = df_cleaned.dropna(subset=['daysSinceLastWorkout']).copy()
+    if not df_analyzed.empty and 'deepSleepPercentage' in df_analyzed.columns:
+        df_analyzed['daysSinceLastWorkout_group'] = df_analyzed['daysSinceLastWorkout'].apply(
+            lambda x: '0 (Workout Day)' if x == 0 else ('1' if x == 1 else ('2' if x == 2 else '3+'))
+        )
+        group_order = ['0 (Workout Day)', '1', '2', '3+']
+        df_analyzed['daysSinceLastWorkout_group'] = pd.Categorical(df_analyzed['daysSinceLastWorkout_group'], categories=group_order, ordered=True)
+        
+        grouped_deep_sleep_by_days = df_analyzed.groupby('daysSinceLastWorkout_group')['deepSleepPercentage'].mean().reset_index()
+        fig_deep_sleep_by_days = px.bar(
+            grouped_deep_sleep_by_days,
+            x='daysSinceLastWorkout_group',
+            y='deepSleepPercentage',
+            labels={'daysSinceLastWorkout_group': 'Days Since Last Workout', 'deepSleepPercentage': 'Average Deep Sleep Percentage (%)'},
+            color='daysSinceLastWorkout_group'
+        )
+        fig_deep_sleep_by_layout = go.Layout(
+          showlegend=False,
+          title_x=0.5,
+          yaxis_title='Average Deep Sleep Percentage (%)',
+          xaxis_title='Days Since Last Workout'
+        )
+        fig_deep_sleep_by_days.update_layout(fig_deep_sleep_by_layout)
+        st.plotly_chart(fig_deep_sleep_by_days, use_container_width=True)
+    else:
+        st.info("Not enough data to analyze deep sleep by days since last workout.")
+
+    # Plot 3: Sleep Duration by Previous Day's Activity Type
+    if 'ActivityPerformedToday' in df_cleaned.columns and 'activityType' in df_cleaned.columns and 'sleepTimeHours' in df_cleaned.columns:
+        activity_cols_for_merge = ['Date', 'activityType']
+        df_next_day_activity = df_cleaned[activity_cols_for_merge + ['ActivityPerformedToday']].copy()
+        df_next_day_activity['Date_plus_1'] = df_next_day_activity['Date'] + pd.Timedelta(days=1)
+        left_df = df_next_day_activity[df_next_day_activity['ActivityPerformedToday']].rename(columns={'Date': 'ActivityDate'})
+        right_df = df_cleaned[['Date', 'sleepTimeHours']].rename(columns={'Date': 'NextDaySleepDate'})
+        df_activity_impact = pd.merge(
+            left_df,
+            right_df,
+            left_on='Date_plus_1',
+            right_on='NextDaySleepDate',
+            how='inner'
+        )
+        df_activity_impact_filtered = df_activity_impact[df_activity_impact['activityType'] != 'No Activity']
+        if not df_activity_impact_filtered.empty:
+            st.subheader("Average Sleep Duration by Previous Day's Activity Type")
+            grouped_impact_by_type = df_activity_impact_filtered.groupby('activityType')['sleepTimeHours'].mean().reset_index()
+            fig_impact_by_type = px.bar(
+                grouped_impact_by_type,
+                x='activityType',
+                y='sleepTimeHours',
+                labels={'activityType': 'Previous Day\'s Activity Type', 'sleepTimeHours': 'Average Sleep Time (Hours)'},
+                color='activityType'
             )
-            st.plotly_chart(fig, use_container_width=True)
+            fig_impact_by_type.update_layout(showlegend=False, title_x=0.5, yaxis_title='Average Sleep Time (Hours)', xaxis_title='Previous Day\'s Activity Type')
+            st.plotly_chart(fig_impact_by_type, use_container_width=True)
         else:
-            st.warning("No data to display in the heatmap.")
+            st.info("No activity data for analysis on previous day's impact.")
     
+    # Plot 4: Variance by Day of Week
+    if 'Date' in df_cleaned.columns and 'sleepTimeHours' in df_cleaned.columns and 'deepSleepPercentage' in df_cleaned.columns:
+        st.subheader("Variance between Total Sleep and Deep Sleep % by Day of Week")
+        df_cleaned['day_of_week'] = pd.Categorical(df_cleaned['Date'].dt.day_name(), categories=['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'], ordered=True)
+        df_grouped_days_since = df_cleaned.groupby('day_of_week')[['sleepTimeHours', 'deepSleepPercentage']].mean()
+        if not df_grouped_days_since.empty:
+            df_grouped_days_since['variance_score'] = (df_grouped_days_since['sleepTimeHours'] - df_grouped_days_since['deepSleepPercentage'] / 10).abs() # Scale deep sleep % for comparison
+            fig_variance = px.bar(
+                df_grouped_days_since.reset_index(),
+                x='day_of_week',
+                y='variance_score',
+                labels={'day_of_week': 'Day of Week', 'variance_score': 'Variance Score (lower is better)'},
+                color='variance_score',
+                color_continuous_scale='viridis'
+            )
+            fig_variance.update_layout(title_x=0.5, yaxis_title='Variance Score', xaxis_title='Day of Week')
+            st.plotly_chart(fig_variance, use_container_width=True)
+        else:
+            st.info("Not enough data to calculate variance.")
+    else:
+        st.info("Missing required data to calculate variance.")
+
+
+def show_insights_page(user):
+    st.title("Insights & Forecasts")
+    st.write("Get personalized insights and forecasts based on your data.")
+    
+    df = read_activity_for_user(user['email'])
+    if df.empty:
+        st.info("No synced activity data found.")
+        return
+        
+    st.subheader("Garmin Coach AI Insights")
+    with st.spinner("Generating AI insights..."):
+        # Dummy data for the LLM call until we have actual data prep
+        summary_dict = {}
+        if 'totalSteps' in df.columns:
+            summary_dict['steps_7d_avg'] = df['totalSteps'].tail(7).mean()
+        if 'sleepTimeHours' in df.columns:
+            summary_dict['sleep_7d_avg_hrs'] = df['sleepTimeHours'].tail(7).mean()
+        
+        # Pull goals for the LLM
+        goals_df = read_goals(st.secrets.get("user_spreadsheet_url", "Garmin_User_Data"))
+        user_goals_list = []
+        if not goals_df.empty:
+            active_goals = goals_df[
+                (goals_df['user_email'] == user['email']) &
+                (goals_df['status'] == 'active')
+            ].to_dict('records')
+            for g in active_goals:
+                # Re-compute forecast for active goals
+                goal_type = g.get('goal_type')
+                if goal_type:
+                    metric_col = map_goal_type_to_column(goal_type)
+                    if metric_col and metric_col in df.columns:
+                        cur_val = df[metric_col].iloc[-1] if not df.empty else None
+                        try:
+                            start_value = float(g.get('start_value')) if g.get('start_value') else None
+                            target_value = float(g.get('target_value')) if g.get('target_value') else None
+                            target_date = pd.to_datetime(g.get('target_date')) if g.get('target_date') else None
+                        except (ValueError, TypeError):
+                            start_value, target_value, target_date = None, None, None
+
+                        if cur_val is not None and start_value is not None and target_value is not None and target_date is not None:
+                            forecast_val, _ = forecast_metric_on_date(df, metric_col, target_date)
+                            higher_is_better = target_value > start_value
+                            if higher_is_better:
+                                denom = (target_value - start_value) if (target_value - start_value) != 0 else 1e-6
+                                progress_pct = max(0.0, min(100.0, (cur_val - start_value) / denom * 100.0))
+                                forecast_success = bool(forecast_val >= target_value) if forecast_val is not None else "N/A"
+                            else:
+                                denom = (start_value - target_value) if (start_value - target_value) != 0 else 1e-6
+                                progress_pct = max(0.0, min(100.0, (start_value - cur_val) / denom * 100.0))
+                                forecast_success = bool(forecast_val <= target_value) if forecast_val is not None else "N/A"
+                        
+                            # write back updates
+                            updates = {
+                                "forecast_value": float(forecast_val) if forecast_val is not None else "",
+                                "progress_pct": round(float(progress_pct), 2) if progress_pct != "" else "",
+                                "forecast_success": str(forecast_success)
+                            }
+                            update_goal_row(g['goal_id'], updates)
+                            # Update the local dictionary to be passed to LLM
+                            g.update(updates)
+                user_goals_list.append(g)
+
+        llm_insights = generate_llm_insights(summary_dict, "Daily segments are not yet implemented.", user_goals_list, user['role'])
+        st.info(llm_insights)
+
+    st.markdown("---")
+    st.subheader("Rolling Averages & 30-Day Forecast")
+    
+    with st.spinner("Generating charts..."):
+        df_ts = df.copy()
+        df_ts['Date'] = pd.to_datetime(df_ts['Date'])
+        df_ts = df_ts.sort_values('Date').reset_index(drop=True)
+        
+        # List of metrics to plot
+        metrics_to_plot = ['totalSteps', 'sleepTimeHours']
+
+        for metric in metrics_to_plot:
+            if metric in df_ts.columns and not df_ts[metric].isnull().all():
+                st.write(f"### {metric.replace('totalSteps', 'Total Steps').replace('sleepTimeHours', 'Total Sleep Hours')}")
+                
+                # Prepare data and calculate rolling average
+                df_plot = df_ts[['Date', metric]].dropna().copy()
+                df_plot['rolling_mean_7'] = df_plot[metric].rolling(window=7).mean().shift(-3)
+                
+                # Forecast the next 30 days of rolling average
+                forecast_df = forecast_rolling_average(df_ts, metric, forecast_days=30)
+                
+                # Plot
+                fig = go.Figure()
+
+                # Add raw data points
+                fig.add_trace(go.Scatter(x=df_plot['Date'], y=df_plot[metric], mode='markers', name='Daily Value',
+                                         marker=dict(color='lightgray', size=5)))
+                
+                # Add rolling average line
+                fig.add_trace(go.Scatter(x=df_plot['Date'], y=df_plot['rolling_mean_7'], mode='lines', name='7-Day Rolling Average',
+                                         line=dict(color='blue', width=2)))
+
+                # Add forecast line
+                if not forecast_df.empty:
+                    fig.add_trace(go.Scatter(x=forecast_df['Date'], y=forecast_df['rolling_mean_7'], mode='lines', name='30-Day Forecast',
+                                             line=dict(color='red', width=2, dash='dash')))
+
+                fig.update_layout(
+                    title=f"7-Day Rolling Average & 30-Day Forecast for {metric.replace('totalSteps', 'Total Steps').replace('sleepTimeHours', 'Total Sleep Hours')}",
+                    xaxis_title="Date",
+                    yaxis_title=metric,
+                    legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1)
+                )
+                
+                st.plotly_chart(fig, use_container_width=True)
+            else:
+                st.info(f"Not enough data for the {metric.replace('totalSteps', 'Total Steps').replace('sleepTimeHours', 'Total Sleep Hours')} chart.")
+
+    st.markdown("---")
+    st.subheader("Goal Progress & Forecast")
+    goals_df = read_goals(st.secrets.get("user_spreadsheet_url", "Garmin_User_Data"))
+    if goals_df.empty:
+        st.info("No goals set up yet.")
+        return
+        
+    goals_df_user = goals_df[goals_df['user_email'] == user['email']]
+
+    for _, g in goals_df_user.iterrows():
+        st.markdown(f"**Goal:** {g['goal_type']} to {g['target_value']} by {g['target_date']}")
+        
+        progress_pct = g.get('progress_pct', 0)
+        forecast_val = g.get('forecast_value', 'N/A')
+        forecast_success = g.get('forecast_success', 'N/A')
+        
+        progress_bar_color = "green" if progress_pct >= 100 else "blue"
+        st.progress(min(float(progress_pct) / 100, 1.0))
+        st.write(f"Progress: **{float(progress_pct):.2f}%**")
+        
+        if forecast_val != "N/A" and forecast_val != "":
+            forecast_status = "On Track" if forecast_success == 'True' else "Off Track"
+            st.markdown(f"Forecasted Value on Target Date: **{float(forecast_val):.2f}** ({forecast_status})")
+        else:
+            st.markdown("Forecast Not Available (Not enough data yet)")
+
+
 def show_goals_page(user):
     st.title("My Goals")
-    
-    st.markdown("---")
-    st.subheader("Current Goals")
-    
-    goals_df = read_goals()
+    st.write("This section is where you can view and set your goals.")
+    goals_df = read_goals(st.secrets.get("user_spreadsheet_url", "Garmin_User_Data"))
     if not goals_df.empty:
-        # Filter goals for the current user
-        user_goals_df = goals_df[goals_df['user_email'] == user['email']].copy()
-        if not user_goals_df.empty:
-            st.dataframe(user_goals_df)
-            
-            # Display progress charts for each goal
-            for _, goal in user_goals_df.iterrows():
-                goal_id = goal['goal_id']
-                goal_type = goal['goal_type']
-                
-                st.subheader(f"Progress for: {goal_type}")
-                
-                try:
-                    start_value = float(goal['start_value'])
-                    target_value = float(goal['target_value'])
-                    progress_pct = float(goal['progress_pct'])
-                    forecast_value = float(goal['forecast_value']) if goal['forecast_value'] else None
-
-                    # Create a progress bar
-                    st.progress(progress_pct / 100)
-                    st.markdown(f"**Progress:** {progress_pct:.2f}% (from {start_value} to {target_value})")
-                    
-                    # Create a plot showing progress vs forecast
-                    if forecast_value is not None:
-                        fig = go.Figure()
-                        fig.add_trace(go.Indicator(
-                            mode="number+gauge",
-                            value=progress_pct,
-                            domain={'x': [0.25, 1], 'y': [0.4, 0.9]},
-                            gauge={'shape': "bullet",
-                                'axis': {'range': [None, 100]},
-                                'threshold': {'line': {'color': "red", 'width': 2}, 'thickness': 0.75, 'value': 100},
-                                'steps': [{'range': [0, 100], 'color': "lightgray"}]},
-                            title={'text': "Progress %"}
-                        ))
-                        fig.add_trace(go.Indicator(
-                            mode="number",
-                            value=forecast_value,
-                            title={"text": "Forecasted Value"}
-                        ))
-                        st.plotly_chart(fig, use_container_width=True)
-
-                except ValueError:
-                    st.warning(f"Could not display chart for goal '{goal_type}' due to missing or invalid data.")
-
-        else:
-            st.info("You haven't added any goals yet.")
-
-    st.markdown("---")
-    st.subheader("Add a New Goal")
+        user_goals = goals_df[goals_df['user_email'] == user['email']]
+        st.subheader("Current Goals")
+        st.dataframe(user_goals)
+    else:
+        st.info("No goals found. Create one below.")
+    
+    st.subheader("Set a New Goal")
     with st.form("new_goal_form"):
-        goal_type = st.selectbox("Goal Type", ["VO2 Max", "Resting HR", "Steps", "Sleep Hours", "Deep Sleep %", "Body Battery"])
-        target_value = st.number_input("Target Value", min_value=0.0)
-        target_date = st.date_input("Target Date")
+        goal_type = st.selectbox("Goal Type", ["VO2 Max", "Resting HR", "Steps", "Sleep Hours"])
+        col1, col2 = st.columns(2)
+        with col1:
+            start_value = st.number_input("Start Value (Optional)", step=0.1, format="%.2f")
+        with col2:
+            target_value = st.number_input("Target Value", step=0.1, format="%.2f")
+        target_date = st.date_input("Target Date", min_value=datetime.date.today())
         
-        submitted = st.form_submit_button("Add Goal")
+        submitted = st.form_submit_button("Create Goal")
+        
         if submitted:
-            # Add goal to sheet
-            user_activity_df = read_activity_for_user(user['email'])
-            
-            # Get the starting value
-            metric_col = map_goal_type_to_column(goal_type)
-            start_value = user_activity_df[metric_col].iloc[-1] if not user_activity_df.empty and metric_col in user_activity_df.columns and not user_activity_df[metric_col].isnull().all() else 0
-            
-            new_goal_row = {
+            goal_row = {
                 "goal_id": str(uuid.uuid4()),
                 "user_email": user['email'],
                 "goal_type": goal_type,
                 "start_value": start_value,
                 "target_value": target_value,
                 "target_date": target_date.isoformat(),
-                "status": "Active",
+                "status": "active",
                 "created_date": datetime.date.today().isoformat(),
                 "progress_pct": 0,
                 "forecast_value": "",
                 "forecast_success": ""
             }
-            
-            append_goal_row(new_goal_row)
-            st.success("Goal added successfully!")
-            st.rerun()
+            append_goal_row(goal_row)
+            st.success("Goal created successfully!")
 
-def show_insights_page(user):
-    st.title("Personalized Insights")
-    st.markdown("---")
 
-    # Get user's activity data
-    df_activity = read_activity_for_user(user['email'])
-    if df_activity.empty:
-        st.info("No activity data to generate insights from. Please sync your data first.")
-        return
+def show_sync_page(user):
+    st.title("Garmin Data Sync")
+    st.write("Sync your data directly from Garmin Connect.")
+    
+    sync_btn = st.button("Sync Data")
+    if sync_btn:
+        with st.spinner("Fetching data from Garmin..."):
+            try:
+                client = Garmin(
+                    st.session_state.garmin_username,
+                    st.session_state.garmin_password
+                )
+                client.login()
+                
+                # --- THIS IS THE CALL TO THE UPDATED FUNCTION ---
+                sync_data_from_garmin(client, user['email'])
+                
+            except Exception as e:
+                st.error(f"Failed to authenticate with Garmin. Please check your credentials. Error: {e}")
 
-    # Basic data summary
-    user_summary = {
-        "most_recent_steps": df_activity['totalSteps'].iloc[-1] if 'totalSteps' in df_activity.columns and not df_activity['totalSteps'].isnull().all() else "N/A",
-        "avg_sleep_hours": df_activity['sleepTimeHours'].mean() if 'sleepTimeHours' in df_activity.columns and not df_activity['sleepTimeHours'].isnull().all() else "N/A",
-        "avg_resting_hr": df_activity['restingHeartRate'].mean() if 'restingHeartRate' in df_activity.columns and not df_activity['restingHeartRate'].isnull().all() else "N/A"
-    }
-
-    # Dummy cluster summary for now
-    cluster_summary_text = "The user has shown a consistent trend of activity on weekdays and lower activity on weekends."
-
-    # Get active goals
-    goals_df = read_goals()
-    user_goals = goals_df[goals_df['user_email'] == user['email']].to_dict('records')
-
-    # Generate insights from LLM
-    with st.spinner("Generating personalized insights from your data..."):
-        insights_text = generate_llm_insights(user_summary, cluster_summary_text, user_goals)
-        st.markdown(insights_text)
 
 # ==========================================================
-# Main app flow
+# UI: Login / Registration
 # ==========================================================
+# Global state management
 if 'logged_in' not in st.session_state:
     st.session_state.logged_in = False
 if 'user_profile' not in st.session_state:
     st.session_state.user_profile = None
 
-# Sidebar for login/logout and main navigation
-st.sidebar.title("Account")
+# Sidebar login
+st.sidebar.title("Login to Garmin")
 if not st.session_state.logged_in:
-    with st.sidebar.form("login_form"):
-        st.subheader("Login / Register")
-        email = st.text_input("Email", key="login_email")
-        password = st.text_input("Password", type="password", key="login_password") # NOTE: This is NOT secure.
-        role_choice = st.selectbox("I am a:", ["user", "coach"])
-        login_button = st.form_submit_button("Login / Register")
-
-        if login_button:
-            if not email:
-                st.error("Please enter your email.")
+    with st.sidebar.form("garmin_login_form"):
+        email = st.text_input("Garmin Email", value="", placeholder="your@email.com")
+        password = st.text_input("Garmin Password", type="password", placeholder="your password")
+        role_choice = st.selectbox("Register as (if new)", ["user", "coach"])
+        submitted = st.form_submit_button("Login / Register")
+        
+        if submitted:
+            if not email or not password:
+                st.error("Please enter both email and password.")
             else:
-                users_df = read_users()
-                user_record = users_df[users_df['email'] == email]
-                if user_record.empty:
-                    # New user, register them
-                    append_user_row(email, role=role_choice)
-                    user_profile = {"email": email, "role": role_choice, "linked_coach_email": "", "certified_coach": False}
-                    st.session_state.user_profile = user_profile
-                    st.session_state.logged_in = True
-                    st.success(f"Registered {email} as {role_choice}. You are now logged in.")
-                else:
-                    # Existing user, log them in
-                    user_profile = user_record.iloc[0].to_dict()
-                    st.session_state.user_profile = user_profile
-                    st.session_state.logged_in = True
-                    st.success(f"Welcome back, {email}! You are now logged in.")
-                st.rerun()
+                with st.spinner("Authenticating with Garmin..."):
+                    try:
+                        client = Garmin(email, password)
+                        client.login()
+                        st.session_state.garmin_username = email
+                        st.session_state.garmin_password = password
+                        
+                        # Authentication successful, now proceed with app logic
+                        users = read_users()
+                        if not users.empty and (users['email'] == email).any():
+                            user_row = users[users['email'] == email].iloc[0].to_dict()
+                            st.session_state.user_profile = user_row
+                            st.success(f"Welcome back, {email} ({user_row.get('role')})!")
+                        else:
+                            append_user_row(email, role=role_choice)
+                            st.session_state.user_profile = {"email": email, "role": role_choice, "linked_coach_email": "", "certified_coach": False}
+                            st.success(f"Registered {email} as {role_choice}. You are now logged in.")
+                            
+                        st.session_state.logged_in = True
+                        st.rerun()
 
+                    except Exception as e:
+                        st.error(f"Failed to authenticate with Garmin. Please check your credentials. Error: {e}")
 else:
     st.sidebar.success(f"Logged in as {st.session_state.user_profile['email']}")
     if st.sidebar.button("Logout"):
         st.session_state.logged_in = False
         st.session_state.user_profile = None
+        st.session_state.pop('garmin_username', None)
+        st.session_state.pop('garmin_password', None)
         st.rerun()
-        
-    st.sidebar.markdown("---")
-    st.sidebar.header("Data Management")
-    garmin_username = st.sidebar.text_input("Garmin Username", key="garmin_username")
-    garmin_password = st.sidebar.text_input("Garmin Password", type="password", key="garmin_password")
-    
-    if st.sidebar.button("Sync Data from Garmin"):
-        if garmin_username and garmin_password:
-            try:
-                with st.spinner("Connecting to Garmin..."):
-                    api = Garmin(garmin_username, garmin_password)
-                    api.login()
-                
-                # Call the fixed function with the API object
-                sync_data_from_garmin(api, st.session_state.user_profile['email'])
-            
-            except Exception as e:
-                st.error(f"Failed to authenticate with Garmin. Please check your credentials. Error: {e}")
-                
-        else:
-            st.sidebar.warning("Please enter both Garmin username and password.")
 
 
 # Main content
 if st.session_state.logged_in:
     # Tab navigation
-    tab_overview, tab_goals, tab_insights = st.tabs(["Dashboard", "My Goals", "Insights"])
+    tab_overview, tab_goals, tab_insights, tab_sync = st.tabs(["Dashboard", "My Goals", "Insights", "Sync Garmin Data"])
     
     with tab_overview:
         show_overview_page(st.session_state.user_profile)
@@ -702,3 +885,10 @@ if st.session_state.logged_in:
     
     with tab_insights:
         show_insights_page(st.session_state.user_profile)
+        
+    with tab_sync:
+        show_sync_page(st.session_state.user_profile)
+
+else:
+    st.title("Welcome to Garmin Coach Dashboard")
+    st.info("Please log in or register using the sidebar to continue.")
