@@ -393,6 +393,41 @@ def generate_llm_insights(summary_dict, cluster_summary_text, goals_list, viewer
     
     except Exception as e:
         return f"LLM call failed or not configured: {e}"
+        
+# -----------------
+# FIX START
+# -----------------
+# This function was not passing the date arguments to preprocessing_garmin_data()
+def sync_data_from_garmin(api, user_id):
+    """
+    Syncs new activity data from Garmin Connect to the Google Sheet.
+    """
+    st.info("Syncing data from Garmin Connect...")
+    try:
+        # Define the date range for data fetching
+        end_date = date.today()
+        start_date = end_date - timedelta(days=90)
+        
+        # Fetch activities from Garmin API within the defined date range
+        activities = api.get_activities_by_date(start_date.isoformat(), end_date.isoformat())
+        
+        # Pass the required arguments to the preprocessing function
+        new_activity_data = preprocessing_garmin_data(activities, start_date, end_date)
+        
+        if not new_activity_data.empty:
+            st.success(f"Successfully synced {len(new_activity_data)} activities from Garmin.")
+            append_activity_data(new_activity_data, user_id)
+        else:
+            st.warning("No new activities found in the specified date range.")
+    except Exception as e:
+        st.error(f"Failed to sync data from Garmin: {e}")
+        st.error("Please check your Garmin Connect credentials and try again.")
+        # Logging the full traceback for debugging purposes
+        import traceback
+        st.error(traceback.format_exc())
+# -----------------
+# FIX END
+# -----------------
 
 # ==========================================================
 # UI: Core pages and helpers (defined BEFORE they are called)
@@ -769,31 +804,17 @@ def show_sync_page(user):
     if sync_btn:
         with st.spinner("Fetching data from Garmin..."):
             try:
-                # Add Garmin login logic here
                 client = Garmin(
                     st.session_state.garmin_username,
                     st.session_state.garmin_password
                 )
                 client.login()
                 
-                # --- FIX START ---
-                # Define the date range for data fetching, as required by the preprocessing function
-                end_date = datetime.date.today()
-                start_date = end_date - datetime.timedelta(days=90)
+                # --- THIS IS THE CALL TO THE UPDATED FUNCTION ---
+                sync_data_from_garmin(client, user['email'])
                 
-                activities = client.get_activities_by_date(start_date.isoformat(), end_date.isoformat())
-                
-                # Preprocess data using the provided function
-                # Now passing both start_date and end_date as required
-                df_garmin = preprocessing_garmin_data(activities, start_date, end_date)
-                # --- FIX END ---
-                
-                # Append to Google Sheets
-                append_activity_data(df_garmin, user['email'])
-                
-                st.success("Data synced successfully!")
             except Exception as e:
-                st.error(f"Failed to sync data from Garmin: {e}")
+                st.error(f"Failed to authenticate with Garmin. Please check your credentials. Error: {e}")
 
 
 # ==========================================================
