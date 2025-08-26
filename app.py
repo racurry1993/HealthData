@@ -514,6 +514,36 @@ def show_overview_page(user):
         st.plotly_chart(fig_total_sleep, use_container_width=True)
         st.caption("These charts show how your deep and total sleep averages change depending on how many days it's been since you last logged an activity. The dashed line represents your overall average, and the colored bars show how each category compares.")
 
+        # --- Chart 3: Variance by Day of Week (New Chart) ---
+        df_variance = df_analyzed.dropna(subset=['deepSleepHours', 'sleepTimeHours']).copy()
+        df_variance['day_of_week'] = df_variance['Date'].dt.day_name()
+        
+        # Calculate the variance score
+        df_grouped_variance = df_variance.groupby('day_of_week')[['sleepTimeHours', 'deepSleepHours']].mean()
+        df_grouped_variance['variance_score'] = (
+            df_grouped_variance['sleepTimeHours'] - df_grouped_variance['deepSleepHours']
+        ).abs()
+        
+        # Order days for the plot
+        day_order = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
+        df_grouped_variance = df_grouped_variance.reindex(day_order).reset_index()
+
+        fig_variance = go.Figure()
+        fig_variance.add_trace(go.Bar(
+            x=df_grouped_variance['day_of_week'],
+            y=df_grouped_variance['variance_score'],
+            marker_color='mediumpurple',
+            name='Variance Score'
+        ))
+
+        fig_variance.update_layout(
+            title='Variance Between Total Sleep & Deep Sleep Hours by Day of Week',
+            xaxis_title='Day of Week',
+            yaxis_title='Variance Score (Abs. Difference in Hours)',
+            hovermode="x unified"
+        )
+        st.plotly_chart(fig_variance, use_container_width=True)
+
     else:
         st.info("Not enough valid data to perform sleep analysis grouped by days since last activity.")
 
