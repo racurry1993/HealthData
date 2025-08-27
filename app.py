@@ -556,12 +556,12 @@ def show_overview_page(user):
             st.info("No activity data for analysis on previous day's impact.")
     
     # Plot 4: Variance by Day of Week
-    if 'Date' in df_cleaned.columns and 'sleepTimeHours' in df_cleaned.columns and 'deepSleepPercentage' in df_cleaned.columns:
+    if 'Date' in df_cleaned.columns and 'sleepTimeHours' in df_cleaned.columns and 'deepSleepHours' in df_cleaned.columns:
         st.subheader("Variance between Total Sleep and Deep Sleep % by Day of Week")
         df_cleaned['day_of_week'] = pd.Categorical(df_cleaned['Date'].dt.day_name(), categories=['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'], ordered=True)
-        df_grouped_days_since = df_cleaned.groupby('day_of_week')[['sleepTimeHours', 'deepSleepPercentage']].mean()
+        df_grouped_days_since = df_cleaned.groupby('day_of_week')[['sleepTimeHours', 'deepSleepHours']].mean()
         if not df_grouped_days_since.empty:
-            df_grouped_days_since['variance_score'] = (df_grouped_days_since['sleepTimeHours'] - df_grouped_days_since['deepSleepPercentage'] / 10).abs() # Scale deep sleep % for comparison
+            df_grouped_days_since['variance_score'] = (df_grouped_days_since['sleepTimeHours'] - df_grouped_days_since['deepSleepHours']).abs()
             fig_variance = px.bar(
                 df_grouped_days_since.reset_index(),
                 x='day_of_week',
