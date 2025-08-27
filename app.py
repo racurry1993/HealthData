@@ -482,7 +482,7 @@ def show_overview_page(user):
     # --- Analysis 1: Impact of ActivityPerformedToday on Sleep ---
     df_cleaned = df.copy()
     if 'ActivityPerformedToday' in df_cleaned.columns and 'sleepTimeHours' in df_cleaned.columns:
-        grouped_sleep_by_workout = df_cleaned.groupby('ActivityPerformedToday')['sleepTimeHours'].mean().reset_index()
+        grouped_sleep_by_workout = df_cleaned.groupby('ActivityPerformedToday')['sleepTimeHours'].mean().round(2).reset_index()
         fig_sleep_by_workout = px.bar(
             grouped_sleep_by_workout,
             x='ActivityPerformedToday',
@@ -498,7 +498,7 @@ def show_overview_page(user):
         st.info("Not enough data to analyze sleep impact by workout.")
 
     # Plot 2: Deep Sleep Percentage by Days Since Last Workout
-    df_analyzed = df_cleaned.dropna(subset=['daysSinceLastWorkout']).copy()
+    df_analyzed = df.dropna(subset=['daysSinceLastWorkout']).copy()
     if not df_analyzed.empty and 'deepSleepPercentage' in df_analyzed.columns:
         df_analyzed['daysSinceLastWorkout_group'] = df_analyzed['daysSinceLastWorkout'].apply(
             lambda x: '0 (Workout Day)' if x == 0 else ('1' if x == 1 else ('2' if x == 2 else '3+'))
@@ -506,7 +506,7 @@ def show_overview_page(user):
         group_order = ['0 (Workout Day)', '1', '2', '3+']
         df_analyzed['daysSinceLastWorkout_group'] = pd.Categorical(df_analyzed['daysSinceLastWorkout_group'], categories=group_order, ordered=True)
         
-        grouped_deep_sleep_by_days = df_analyzed.groupby('daysSinceLastWorkout_group')['deepSleepPercentage'].mean().reset_index()
+        grouped_deep_sleep_by_days = df_analyzed.groupby('daysSinceLastWorkout_group')['deepSleepPercentage'].mean().round(2).reset_index()
         fig_deep_sleep_by_days = px.bar(
             grouped_deep_sleep_by_days,
             x='daysSinceLastWorkout_group',
