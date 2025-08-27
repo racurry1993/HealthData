@@ -450,7 +450,7 @@ def show_overview_page(user):
         }
         
         df_pivot = df_heatmap.pivot_table(
-            index=df_heatmap['Date'].dt.isocalendar().week,
+            index=df_heatmap['Date'].dt.isocalendar().month,
             columns=df_heatmap['Date'].dt.day_name(),
             values=metric_choice
         )
@@ -467,9 +467,9 @@ def show_overview_page(user):
         ))
         
         fig.update_layout(
-            title=f'{title_map[metric_choice]} by Day of Week and Week of Year',
+            title=f'{title_map[metric_choice]} by Day of Week and Month',
             xaxis_title="Day of Week",
-            yaxis_title="Week of Year",
+            yaxis_title="Month",
             yaxis_autorange='reversed'
         )
         st.plotly_chart(fig, use_container_width=True)
