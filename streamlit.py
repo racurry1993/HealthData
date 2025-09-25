@@ -3,29 +3,49 @@ import pandas as pd
 from datetime import datetime, timedelta
 from google.cloud import bigquery
 import os
+import json
 
 # Assume this file exists in the same directory.
 from data_pre_processing import preprocessing_garmin_data
 
 # --- BIGQUERY CLIENT (REAL IMPLEMENTATION) ---
-# Ensure you have your Google Cloud credentials configured.
-# You can set the GOOGLE_APPLICATION_CREDENTIALS environment variable,
-# or provide the path to your service account key file here.
-# For example: os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = 'path/to/your-key.json'
-
+# NOTE: This code has been temporarily modified to bypass the Streamlit
+# secrets management issue. We will revert this once the root cause is found.
 class BigQueryClient:
     """
     A class to handle real BigQuery operations.
     """
     def __init__(self):
-        # Initialize the BigQuery client using the service account credentials
-        self.client = bigquery.Client.from_service_account_info(
-            st.secrets["gcp_bigquery_service_account"]
-        )
-        self.table_id = "garminuserdata.garminuserdata.garmin_activity_data"
+        try:
+            # Attempt to use st.secrets first as intended
+            self.client = bigquery.Client.from_service_account_info(
+                st.secrets["gcp_bigquery_service_account"]
+            )
+        except KeyError:
+            # Fallback to direct file loading if Streamlit secrets fail.
+            # This is a temporary fix to allow the app to run.
+            st.error("Failed to load BigQuery secrets from secrets.toml. Attempting direct file read...")
+            try:
+                # Assuming the secrets file is at .streamlit/secrets.toml
+                with open(".streamlit/secrets.toml", "r") as f:
+                    import toml
+                    secrets_data = toml.load(f)
+                    service_account_info = secrets_data["gcp_bigquery_service_account"]
+                    self.client = bigquery.Client.from_service_account_info(service_account_info)
+                    st.success("Successfully loaded credentials by reading the file directly.")
+            except Exception as e:
+                st.error(f"Failed to load credentials directly from file: {e}")
+                self.client = None # Set client to None to prevent further errors
+        
+        # Only set table_id if the client was successfully created
+        if self.client:
+            self.table_id = "garminuserdata.garminuserdata.garmin_activity_data"
+        else:
+            self.table_id = None
 
     def get_user_most_recent_date(self, username: str) -> datetime | None:
         """Queries the table for the most recent date for a specific user."""
+        if not self.client: return None
         query = f"""
         SELECT MAX(Date) AS most_recent_date
         FROM `{self.table_id}`
@@ -44,6 +64,7 @@ class BigQueryClient:
 
     def add_data(self, username: str, df: pd.DataFrame):
         """Inserts a DataFrame into the BigQuery table."""
+        if not self.client: return
         # Add the username to the DataFrame before logging
         df['username'] = username
         
@@ -61,6 +82,7 @@ class BigQueryClient:
             
     def get_all_user_data(self, username: str) -> pd.DataFrame:
         """Pulls all data for a specific user from BigQuery."""
+        if not self.client: return pd.DataFrame()
         query = f"""
         SELECT *
         FROM `{self.table_id}`
@@ -211,7 +233,7 @@ if submitted:
 
                 # 3. Use the pre-processing function
                 try:
-                    processed_df = clean_data(raw_df.copy())
+                    processed_df = preprocessing_garmin_data(raw_df.copy())
                     st.subheader("Cleaned Data (from data_pre_processing.py)")
                     st.dataframe(processed_df)
 
