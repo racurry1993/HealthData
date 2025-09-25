@@ -9,38 +9,36 @@ import json
 from data_pre_processing import preprocessing_garmin_data
 
 # --- BIGQUERY CLIENT (REAL IMPLEMENTATION) ---
-# NOTE: This code has been temporarily modified to bypass the Streamlit
-# secrets management issue. We will revert this once the root cause is found.
+# NOTE: This code has been temporarily modified to embed the credentials directly
+# to bypass the persistent file-loading issue with Streamlit secrets.
 class BigQueryClient:
     """
     A class to handle real BigQuery operations.
     """
     def __init__(self):
-        try:
-            # Attempt to use st.secrets first as intended
-            self.client = bigquery.Client.from_service_account_info(
-                st.secrets["gcp_bigquery_service_account"]
-            )
-        except KeyError:
-            # Fallback to direct file loading if Streamlit secrets fail.
-            # This is a temporary fix to allow the app to run.
-            st.error("Failed to load BigQuery secrets from secrets.toml. Attempting direct file read...")
-            try:
-                # Assuming the secrets file is at .streamlit/secrets.toml
-                with open(".streamlit/secrets.toml", "r") as f:
-                    import toml
-                    secrets_data = toml.load(f)
-                    service_account_info = secrets_data["gcp_bigquery_service_account"]
-                    self.client = bigquery.Client.from_service_account_info(service_account_info)
-                    st.success("Successfully loaded credentials by reading the file directly.")
-            except Exception as e:
-                st.error(f"Failed to load credentials directly from file: {e}")
-                self.client = None # Set client to None to prevent further errors
+        # Service account credentials embedded directly as a dictionary.
+        # This bypasses the need for the secrets.toml file entirely for BigQuery.
+        service_account_info = {
+            "type": "service_account",
+            "project_id": "garminuserdata",
+            "private_key_id": "48134d3b1bf58a88741f204515597a840c613fd2",
+            "private_key": "-----BEGIN PRIVATE KEY-----\nMIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQDNGwy5lYUcEXYI\nEk4i027RS6SZVDNOorkReZgm+21RPfJmv/rejXsId6c6K0yYEMejNZlbc6kKAr/b\nthe74Mu2XrA834djZ1BtdfJwwyAg1WOq/eF5QUlJK5BgdcLPrZvTJRMqFSOjcJos\nkN3ZhXvgj5nqU3cfDNesh616uSD+r46HlUM3RIWDwR1DM24jpbrfyzurtwNiwTlu\nS0z/naj4/BQSbCuBInHn/rbQeVIkhV4X61L0zZkyR6cn04/FAsB02QH65stEhUe1\nrooHDlgWf/hjsS2NV+P+d3XSvU7xbayeeINukPTnhdQd77MnZ3NjbifYmXq/kiDz\nrpUA0iNDAgMBAAECggEAB5s8YmRz9neECPr1iTmlM6JjJ08XRL6or6UhOMMOGFhl\nI8XRmuzwGq3Uk7pQoDq3E+iy3hZfWdeZiJ9ltEuMizdS198Vk3gRHoJ16Vnr4+vU\niN431ILn81JFF3AmlI/V8gN5VmGOfuJgyynEjwKsMJg87pLuwHR97O0/6017k62b\nRDEvgbXqQF7VWDeqG5CdEvzoVkUHoZtPjADn0jyyBrzk7vxs8NdB4Fmp4XAufsv9\nY6d7LitPLO1uB5r5EAgbvQ47wZ/uG6F0IYd6dYK0IMgCNui8RqBgelo0S0rpjFqS\nQlJ9AWAR1fAlKX/Dq0Sj4dOefO4lvtUV+oAdewIoOQKBgQD5f1kf3fcgVomAnvZX\nHC0gA8gFyc2grVx9rbO+ybyWNabpH5Kb8dRxSYEmNbJLoTVFGGmSjdC6h4lWZJaa\nMQ0QUbab28fKoVHu9L+4ODbQniv4pQyBgFzVi1MZahVzvYv3aLGLZLtTPXLLCFpm\n15LnV5dSTxGqGxYD+5aUJfwlZwKBgQDSc4TH0X863H8pOSBldWPHKzQbW+Ix/RTe\nEP9VbCpf23ihr/mszc1RnvhHYUBG5o8wnrP2rK8SNylJmLQh1dSZrNKqKRzUCv80\nZb0w8P1yoXC50G4ezaCw/jiGnOzw2n3gZaSRbEgQlfBtxPwVInU3kfoYnOlO6B1s\nFckkTU/txQKBgAXxU5Ufu1go14OZxbJTeHuvu17v7JbsKizQK1za/0PwqTYaS2qt\neurr3kijtMh6YYNwzmrwN82JlurY4IFxs6b0202hEYQxDXuMlthzdlLHwbJddAvN\nm+h2Nhd/4FzuYdwVwUzZrGCSMR7G5yhV8CjUfEU4nuoXVRHpKv4CaQr3AoGBAMz+\nAx+UPEc8koy3/Yt4cPOHbNkddkZVC+eHTP+LPfdjU6zDOgON7+oKXDNDUpX9bQrh\n+9BSwrGOk6QBn6y5mb4bLpTbOR5+m7oRQ+kRRP9Mq/4DPdC5YUYmSy8sWkv9t9FF\nkLiqbcPiGXEDCL0ZdG4tvhwNc+ENjeNDkUrQGAQ1AoGADJVtUtIKFCjEKHpAISNy\n2jwdcAGeFfe/wFGfOhntZQzTErOFOf+dEJpLW/Zyg/8GbrFPgQCrbk0BNsHM8fTQ\nIbWIRxHYgfOIObDgO89KJKkt/09ztvph5/DR3AtQhQwD6IQgU3gyMreYzj+g5Ebf\nE7Xv3IcmI9bLBFiODki7KVQ=\n-----END PRIVATE KEY-----\n",
+            "client_email": "garminuserdata@garminuserdata.iam.gserviceaccount.com",
+            "client_id": "106768300223415646530",
+            "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+            "token_uri": "https://oauth2.googleapis.com/token",
+            "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+            "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/garminuserdata%40garminuserdata.iam.gserviceaccount.com",
+            "universe_domain": "googleapis.com"
+        }
         
-        # Only set table_id if the client was successfully created
-        if self.client:
+        try:
+            self.client = bigquery.Client.from_service_account_info(service_account_info)
             self.table_id = "garminuserdata.garminuserdata.garmin_activity_data"
-        else:
+            st.success("BigQuery client initialized successfully.")
+        except Exception as e:
+            st.error(f"Failed to initialize BigQuery client: {e}")
+            self.client = None
             self.table_id = None
 
     def get_user_most_recent_date(self, username: str) -> datetime | None:
