@@ -1,55 +1,92 @@
 import streamlit as st
 import pandas as pd
 from datetime import datetime, timedelta
-import io
+from google.cloud import bigquery
+import os
 
 # Assume this file exists in the same directory.
-# In a real app, you would have your credentials and BigQuery client here.
-# from google.cloud import bigquery
 from data_pre_processing import clean_data
 
-# --- MOCK CLASSES (Replace with real implementations) ---
-# We use these to simulate the behavior of a real BigQuery client
-# and a user database without needing actual credentials or a connection.
+# --- BIGQUERY CLIENT (REAL IMPLEMENTATION) ---
+# Ensure you have your Google Cloud credentials configured.
+# You can set the GOOGLE_APPLICATION_CREDENTIALS environment variable,
+# or provide the path to your service account key file here.
+# For example: os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = 'path/to/your-key.json'
 
-class MockBigQueryClient:
+class BigQueryClient:
     """
-    A mock class to simulate Google BigQuery operations, now with user-specific data.
+    A class to handle real BigQuery operations.
     """
     def __init__(self):
-        # Using a DataFrame to simulate a table with a 'username' column
-        self._table = pd.DataFrame(
-            columns=['username', 'date', 'value', 'some_column', 'processed_column', 'recommendation']
+        # Initialize the BigQuery client using the service account credentials
+        self.client = bigquery.Client.from_service_account_info(
+            st.secrets["gcp_bigquery_service_account"]
         )
+        self.table_id = "garminuserdata.garminuserdata.garmin_activity_data"
 
     def get_user_most_recent_date(self, username: str) -> datetime | None:
-        """Simulates querying the table for the most recent date for a specific user."""
-        user_data = self._table[self._table['username'] == username]
-        if user_data.empty:
+        """Queries the table for the most recent date for a specific user."""
+        query = f"""
+        SELECT MAX(Date) AS most_recent_date
+        FROM `{self.table_id}`
+        WHERE username = '{username}'
+        """
+        query_job = self.client.query(query)
+        try:
+            result = query_job.result()
+            row = next(result)
+            if row.most_recent_date:
+                # BigQuery returns a datetime object, we want just the date part
+                return row.most_recent_date.date()
             return None
-        
-        user_data['date'] = pd.to_datetime(user_data['date'])
-        most_recent_date = user_data['date'].max()
-        return most_recent_date.date()
+        except StopIteration:
+            return None
 
     def add_data(self, username: str, df: pd.DataFrame):
-        """Simulates inserting a DataFrame into a BigQuery table, tagging it with the user."""
+        """Inserts a DataFrame into the BigQuery table."""
+        # Add the username to the DataFrame before logging
         df['username'] = username
-        self._table = pd.concat([self._table, df], ignore_index=True)
-        st.success(f"Successfully logged {len(df)} records for user '{username}' to BigQuery.")
-
+        
+        job_config = bigquery.LoadJobConfig(write_disposition='WRITE_APPEND')
+        
+        # Load the DataFrame to the BigQuery table
+        job = self.client.load_table_from_dataframe(df, self.table_id, job_config=job_config)
+        
+        try:
+            job.result()  # Wait for the load job to complete
+            st.success(f"Successfully appended {job.output_rows} rows to BigQuery table {self.table_id}.")
+        except Exception as e:
+            st.error(f"Failed to load data to BigQuery: {e}")
+            st.error(f"Job errors: {job.errors}")
+            
     def get_all_user_data(self, username: str) -> pd.DataFrame:
-        """Simulates pulling all data for a specific user from BigQuery."""
-        user_data = self._table[self._table['username'] == username].copy()
-        return user_data
+        """Pulls all data for a specific user from BigQuery."""
+        query = f"""
+        SELECT *
+        FROM `{self.table_id}`
+        WHERE username = '{username}'
+        ORDER BY Date ASC
+        """
+        query_job = self.client.query(query)
+        
+        try:
+            df = query_job.result().to_dataframe()
+            st.success(f"Successfully retrieved {len(df)} records for user '{username}'.")
+            return df
+        except Exception as e:
+            st.error(f"Failed to retrieve data from BigQuery: {e}")
+            return pd.DataFrame()
 
+# --- MOCK AUTH CLIENT (RETAINED FOR DEMO) ---
+# We keep this mock class as it simulates the part of your application
+# that retrieves new data from an external source (e.g., Garmin API).
 class MockAuthClient:
     """
-    A mock class to simulate user authentication.
-    Replace this with your real authentication service (e.g., Firebase Auth, Auth0).
+    A mock class to simulate user authentication and data retrieval from a source.
     """
     def authenticate(self, username, password) -> bool:
         """Simulates a login attempt."""
+        # Replace with your real authentication logic
         return bool(username and password)
 
     def get_user_data_since(self, username: str, start_date: datetime) -> pd.DataFrame:
@@ -60,9 +97,23 @@ class MockAuthClient:
         st.info(f"Simulating a data pull for user '{username}' from {start_date} to today.")
         # This is dummy data.
         data = {
-            'date': pd.date_range(start=start_date, end=datetime.now(), periods=5),
+            'Date': pd.date_range(start=start_date, end=datetime.now(), periods=5),
             'value': range(len(pd.date_range(start=start_date, end=datetime.now(), periods=5))),
-            'some_column': ['A', 'b', 'C', 'd', 'E']
+            'some_column': ['A', 'b', 'C', 'd', 'E'],
+            # The following columns are placeholders to match your cleaning function
+            'locationName': ['Home', 'Park', 'Gym', 'Street', 'Trail'],
+            'trainingEffectLabel': ['Low', 'High', 'Low', 'High', 'Medium'],
+            'aerobicTrainingEffectMessage': ['Normal', 'Normal', 'Normal', 'Normal', 'Normal'],
+            'anaerobicTrainingEffectMessage': ['Normal', 'Normal', 'Normal', 'Normal', 'Normal'],
+            'typeKey_clean': ['run', 'walk', 'cycle', 'run', 'walk'],
+            'startTimeCat': ['morning', 'afternoon', 'evening', 'morning', 'afternoon'],
+            'ageGroup': ['20-29', '30-39', '40-49', '50-59', '60+'],
+            'sleepScoreInsight': ['Good', 'Good', 'Good', 'Good', 'Good'],
+            'sleepScoreFeedback': ['Good', 'Good', 'Good', 'Good', 'Good'],
+            'stressQualifier': ['High', 'High', 'High', 'High', 'High'],
+            'ActivityStartHour': [8, 14, 20, 9, 15],
+            'activityType': ['running', 'walking', 'cycling', 'running', 'walking'],
+            'day_of_week': ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'],
         }
         return pd.DataFrame(data)
 
@@ -109,8 +160,8 @@ Remember, every effort counts. Consistency and small daily improvements lead to 
 
 # --- APPLICATION LOGIC ---
 
-# Initialize mock clients
-bq_client = MockBigQueryClient()
+# Initialize clients
+bq_client = BigQueryClient()
 auth_client = MockAuthClient()
 
 # --- STREAMLIT UI ---
