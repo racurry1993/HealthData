@@ -635,3 +635,767 @@
 2025-09-25 13:25:30,303 - data_pre_processing - INFO - Fetching data for period: 2025-09-23
 2025-09-25 13:25:30,513 - data_pre_processing - INFO - Fetching data for period: 2025-09-24
 2025-09-25 13:25:30,740 - data_pre_processing - INFO - Fetching data for period: 2025-09-25
+2025-09-25 13:25:58,619 - data_pre_processing - INFO - Fetching data for period: 2024-01-01
+2025-09-25 13:25:58,846 - data_pre_processing - INFO - Fetching data for period: 2024-01-02
+2025-09-25 13:25:59,045 - data_pre_processing - INFO - Fetching data for period: 2024-01-03
+2025-09-25 13:25:59,354 - data_pre_processing - INFO - Fetching data for period: 2024-01-04
+2025-09-25 13:25:59,544 - data_pre_processing - INFO - Fetching data for period: 2024-01-05
+2025-09-25 13:25:59,851 - data_pre_processing - INFO - Fetching data for period: 2024-01-06
+2025-09-25 13:26:00,161 - data_pre_processing - INFO - Fetching data for period: 2024-01-07
+2025-09-25 13:26:00,376 - data_pre_processing - INFO - Fetching data for period: 2024-01-08
+2025-09-25 13:26:00,653 - data_pre_processing - INFO - Fetching data for period: 2024-01-09
+2025-09-25 13:26:00,866 - data_pre_processing - INFO - Fetching data for period: 2024-01-10
+2025-09-25 13:26:01,068 - data_pre_processing - INFO - Fetching data for period: 2024-01-11
+2025-09-25 13:26:01,337 - data_pre_processing - INFO - Fetching data for period: 2024-01-12
+2025-09-25 13:26:01,696 - data_pre_processing - INFO - Fetching data for period: 2024-01-13
+2025-09-25 13:26:02,023 - data_pre_processing - INFO - Fetching data for period: 2024-01-14
+2025-09-25 13:26:02,268 - data_pre_processing - INFO - Fetching data for period: 2024-01-15
+2025-09-25 13:26:02,488 - data_pre_processing - INFO - Fetching data for period: 2024-01-16
+2025-09-25 13:26:02,674 - data_pre_processing - INFO - Fetching data for period: 2024-01-17
+2025-09-25 13:26:02,879 - data_pre_processing - INFO - Fetching data for period: 2024-01-18
+2025-09-25 13:26:03,077 - data_pre_processing - INFO - Fetching data for period: 2024-01-19
+2025-09-25 13:26:03,402 - data_pre_processing - INFO - Fetching data for period: 2024-01-20
+2025-09-25 13:26:03,603 - data_pre_processing - INFO - Fetching data for period: 2024-01-21
+2025-09-25 13:26:03,806 - data_pre_processing - INFO - Fetching data for period: 2024-01-22
+2025-09-25 13:26:04,001 - data_pre_processing - INFO - Fetching data for period: 2024-01-23
+2025-09-25 13:26:04,215 - data_pre_processing - INFO - Fetching data for period: 2024-01-24
+2025-09-25 13:26:04,507 - data_pre_processing - INFO - Fetching data for period: 2024-01-25
+2025-09-25 13:26:04,693 - data_pre_processing - INFO - Fetching data for period: 2024-01-26
+2025-09-25 13:26:04,886 - data_pre_processing - INFO - Fetching data for period: 2024-01-27
+2025-09-25 13:26:05,115 - data_pre_processing - INFO - Fetching data for period: 2024-01-28
+2025-09-25 13:26:05,307 - data_pre_processing - INFO - Fetching data for period: 2024-01-29
+2025-09-25 13:26:05,502 - data_pre_processing - INFO - Fetching data for period: 2024-01-30
+2025-09-25 13:26:05,700 - data_pre_processing - INFO - Fetching data for period: 2024-01-31
+2025-09-25 13:26:05,932 - data_pre_processing - INFO - Fetching data for period: 2024-02-01
+2025-09-25 13:26:06,147 - data_pre_processing - INFO - Fetching data for period: 2024-02-02
+2025-09-25 13:26:06,349 - data_pre_processing - INFO - Fetching data for period: 2024-02-03
+2025-09-25 13:26:06,587 - data_pre_processing - INFO - Fetching data for period: 2024-02-04
+2025-09-25 13:26:06,792 - data_pre_processing - INFO - Fetching data for period: 2024-02-05
+2025-09-25 13:26:07,088 - data_pre_processing - INFO - Fetching data for period: 2024-02-06
+2025-09-25 13:26:07,284 - data_pre_processing - INFO - Fetching data for period: 2024-02-07
+2025-09-25 13:26:07,503 - data_pre_processing - INFO - Fetching data for period: 2024-02-08
+2025-09-25 13:26:07,708 - data_pre_processing - INFO - Fetching data for period: 2024-02-09
+2025-09-25 13:26:07,910 - data_pre_processing - INFO - Fetching data for period: 2024-02-10
+2025-09-25 13:26:08,117 - data_pre_processing - INFO - Fetching data for period: 2024-02-11
+2025-09-25 13:26:08,320 - data_pre_processing - INFO - Fetching data for period: 2024-02-12
+2025-09-25 13:26:08,510 - data_pre_processing - INFO - Fetching data for period: 2024-02-13
+2025-09-25 13:26:08,720 - data_pre_processing - INFO - Fetching data for period: 2024-02-14
+2025-09-25 13:26:08,911 - data_pre_processing - INFO - Fetching data for period: 2024-02-15
+2025-09-25 13:26:09,116 - data_pre_processing - INFO - Fetching data for period: 2024-02-16
+2025-09-25 13:26:09,310 - data_pre_processing - INFO - Fetching data for period: 2024-02-17
+2025-09-25 13:26:09,516 - data_pre_processing - INFO - Fetching data for period: 2024-02-18
+2025-09-25 13:26:09,707 - data_pre_processing - INFO - Fetching data for period: 2024-02-19
+2025-09-25 13:26:09,901 - data_pre_processing - INFO - Fetching data for period: 2024-02-20
+2025-09-25 13:26:10,107 - data_pre_processing - INFO - Fetching data for period: 2024-02-21
+2025-09-25 13:26:10,356 - data_pre_processing - INFO - Fetching data for period: 2024-02-22
+2025-09-25 13:26:10,546 - data_pre_processing - INFO - Fetching data for period: 2024-02-23
+2025-09-25 13:26:10,813 - data_pre_processing - INFO - Fetching data for period: 2024-02-24
+2025-09-25 13:26:11,015 - data_pre_processing - INFO - Fetching data for period: 2024-02-25
+2025-09-25 13:26:11,209 - data_pre_processing - INFO - Fetching data for period: 2024-02-26
+2025-09-25 13:26:11,426 - data_pre_processing - INFO - Fetching data for period: 2024-02-27
+2025-09-25 13:26:11,696 - data_pre_processing - INFO - Fetching data for period: 2024-02-28
+2025-09-25 13:26:11,909 - data_pre_processing - INFO - Fetching data for period: 2024-02-29
+2025-09-25 13:26:12,095 - data_pre_processing - INFO - Fetching data for period: 2024-03-01
+2025-09-25 13:26:12,280 - data_pre_processing - INFO - Fetching data for period: 2024-03-02
+2025-09-25 13:26:12,476 - data_pre_processing - INFO - Fetching data for period: 2024-03-03
+2025-09-25 13:26:12,671 - data_pre_processing - INFO - Fetching data for period: 2024-03-04
+2025-09-25 13:26:12,867 - data_pre_processing - INFO - Fetching data for period: 2024-03-05
+2025-09-25 13:26:13,070 - data_pre_processing - INFO - Fetching data for period: 2024-03-06
+2025-09-25 13:26:13,287 - data_pre_processing - INFO - Fetching data for period: 2024-03-07
+2025-09-25 13:26:13,479 - data_pre_processing - INFO - Fetching data for period: 2024-03-08
+2025-09-25 13:26:13,677 - data_pre_processing - INFO - Fetching data for period: 2024-03-09
+2025-09-25 13:26:13,866 - data_pre_processing - INFO - Fetching data for period: 2024-03-10
+2025-09-25 13:26:14,102 - data_pre_processing - INFO - Fetching data for period: 2024-03-11
+2025-09-25 13:26:14,281 - data_pre_processing - INFO - Fetching data for period: 2024-03-12
+2025-09-25 13:26:14,476 - data_pre_processing - INFO - Fetching data for period: 2024-03-13
+2025-09-25 13:26:14,743 - data_pre_processing - INFO - Fetching data for period: 2024-03-14
+2025-09-25 13:26:14,929 - data_pre_processing - INFO - Fetching data for period: 2024-03-15
+2025-09-25 13:26:15,120 - data_pre_processing - INFO - Fetching data for period: 2024-03-16
+2025-09-25 13:26:15,304 - data_pre_processing - INFO - Fetching data for period: 2024-03-17
+2025-09-25 13:26:15,511 - data_pre_processing - INFO - Fetching data for period: 2024-03-18
+2025-09-25 13:26:15,697 - data_pre_processing - INFO - Fetching data for period: 2024-03-19
+2025-09-25 13:26:15,924 - data_pre_processing - INFO - Fetching data for period: 2024-03-20
+2025-09-25 13:26:16,167 - data_pre_processing - INFO - Fetching data for period: 2024-03-21
+2025-09-25 13:26:16,361 - data_pre_processing - INFO - Fetching data for period: 2024-03-22
+2025-09-25 13:26:16,547 - data_pre_processing - INFO - Fetching data for period: 2024-03-23
+2025-09-25 13:26:16,752 - data_pre_processing - INFO - Fetching data for period: 2024-03-24
+2025-09-25 13:26:16,976 - data_pre_processing - INFO - Fetching data for period: 2024-03-25
+2025-09-25 13:26:17,183 - data_pre_processing - INFO - Fetching data for period: 2024-03-26
+2025-09-25 13:26:17,398 - data_pre_processing - INFO - Fetching data for period: 2024-03-27
+2025-09-25 13:26:17,579 - data_pre_processing - INFO - Fetching data for period: 2024-03-28
+2025-09-25 13:26:17,777 - data_pre_processing - INFO - Fetching data for period: 2024-03-29
+2025-09-25 13:26:18,182 - data_pre_processing - INFO - Fetching data for period: 2024-03-30
+2025-09-25 13:26:18,365 - data_pre_processing - INFO - Fetching data for period: 2024-03-31
+2025-09-25 13:26:18,557 - data_pre_processing - INFO - Fetching data for period: 2024-04-01
+2025-09-25 13:26:18,742 - data_pre_processing - INFO - Fetching data for period: 2024-04-02
+2025-09-25 13:26:18,929 - data_pre_processing - INFO - Fetching data for period: 2024-04-03
+2025-09-25 13:26:19,138 - data_pre_processing - INFO - Fetching data for period: 2024-04-04
+2025-09-25 13:26:19,330 - data_pre_processing - INFO - Fetching data for period: 2024-04-05
+2025-09-25 13:26:19,518 - data_pre_processing - INFO - Fetching data for period: 2024-04-06
+2025-09-25 13:26:19,731 - data_pre_processing - INFO - Fetching data for period: 2024-04-07
+2025-09-25 13:26:19,937 - data_pre_processing - INFO - Fetching data for period: 2024-04-08
+2025-09-25 13:26:20,128 - data_pre_processing - INFO - Fetching data for period: 2024-04-09
+2025-09-25 13:26:20,312 - data_pre_processing - INFO - Fetching data for period: 2024-04-10
+2025-09-25 13:26:20,521 - data_pre_processing - INFO - Fetching data for period: 2024-04-11
+2025-09-25 13:26:20,714 - data_pre_processing - INFO - Fetching data for period: 2024-04-12
+2025-09-25 13:26:20,912 - data_pre_processing - INFO - Fetching data for period: 2024-04-13
+2025-09-25 13:26:21,089 - data_pre_processing - INFO - Fetching data for period: 2024-04-14
+2025-09-25 13:26:21,290 - data_pre_processing - INFO - Fetching data for period: 2024-04-15
+2025-09-25 13:26:21,480 - data_pre_processing - INFO - Fetching data for period: 2024-04-16
+2025-09-25 13:26:21,788 - data_pre_processing - INFO - Fetching data for period: 2024-04-17
+2025-09-25 13:26:21,998 - data_pre_processing - INFO - Fetching data for period: 2024-04-18
+2025-09-25 13:26:22,201 - data_pre_processing - INFO - Fetching data for period: 2024-04-19
+2025-09-25 13:26:22,418 - data_pre_processing - INFO - Fetching data for period: 2024-04-20
+2025-09-25 13:26:22,649 - data_pre_processing - INFO - Fetching data for period: 2024-04-21
+2025-09-25 13:26:22,840 - data_pre_processing - INFO - Fetching data for period: 2024-04-22
+2025-09-25 13:26:23,046 - data_pre_processing - INFO - Fetching data for period: 2024-04-23
+2025-09-25 13:26:23,242 - data_pre_processing - INFO - Fetching data for period: 2024-04-24
+2025-09-25 13:26:23,554 - data_pre_processing - INFO - Fetching data for period: 2024-04-25
+2025-09-25 13:26:23,763 - data_pre_processing - INFO - Fetching data for period: 2024-04-26
+2025-09-25 13:26:23,949 - data_pre_processing - INFO - Fetching data for period: 2024-04-27
+2025-09-25 13:26:24,142 - data_pre_processing - INFO - Fetching data for period: 2024-04-28
+2025-09-25 13:26:24,337 - data_pre_processing - INFO - Fetching data for period: 2024-04-29
+2025-09-25 13:26:24,559 - data_pre_processing - INFO - Fetching data for period: 2024-04-30
+2025-09-25 13:26:24,747 - data_pre_processing - INFO - Fetching data for period: 2024-05-01
+2025-09-25 13:26:24,986 - data_pre_processing - INFO - Fetching data for period: 2024-05-02
+2025-09-25 13:26:25,306 - data_pre_processing - INFO - Fetching data for period: 2024-05-03
+2025-09-25 13:26:25,514 - data_pre_processing - INFO - Fetching data for period: 2024-05-04
+2025-09-25 13:26:25,709 - data_pre_processing - INFO - Fetching data for period: 2024-05-05
+2025-09-25 13:26:25,899 - data_pre_processing - INFO - Fetching data for period: 2024-05-06
+2025-09-25 13:26:26,100 - data_pre_processing - INFO - Fetching data for period: 2024-05-07
+2025-09-25 13:26:26,296 - data_pre_processing - INFO - Fetching data for period: 2024-05-08
+2025-09-25 13:26:26,492 - data_pre_processing - INFO - Fetching data for period: 2024-05-09
+2025-09-25 13:26:26,704 - data_pre_processing - INFO - Fetching data for period: 2024-05-10
+2025-09-25 13:26:26,879 - data_pre_processing - INFO - Fetching data for period: 2024-05-11
+2025-09-25 13:26:27,059 - data_pre_processing - INFO - Fetching data for period: 2024-05-12
+2025-09-25 13:26:27,271 - data_pre_processing - INFO - Fetching data for period: 2024-05-13
+2025-09-25 13:26:27,457 - data_pre_processing - INFO - Fetching data for period: 2024-05-14
+2025-09-25 13:26:27,693 - data_pre_processing - INFO - Fetching data for period: 2024-05-15
+2025-09-25 13:26:27,890 - data_pre_processing - INFO - Fetching data for period: 2024-05-16
+2025-09-25 13:26:28,084 - data_pre_processing - INFO - Fetching data for period: 2024-05-17
+2025-09-25 13:26:28,281 - data_pre_processing - INFO - Fetching data for period: 2024-05-18
+2025-09-25 13:26:28,468 - data_pre_processing - INFO - Fetching data for period: 2024-05-19
+2025-09-25 13:26:28,680 - data_pre_processing - INFO - Fetching data for period: 2024-05-20
+2025-09-25 13:26:28,873 - data_pre_processing - INFO - Fetching data for period: 2024-05-21
+2025-09-25 13:26:29,176 - data_pre_processing - INFO - Fetching data for period: 2024-05-22
+2025-09-25 13:26:29,390 - data_pre_processing - INFO - Fetching data for period: 2024-05-23
+2025-09-25 13:26:29,626 - data_pre_processing - INFO - Fetching data for period: 2024-05-24
+2025-09-25 13:26:29,810 - data_pre_processing - INFO - Fetching data for period: 2024-05-25
+2025-09-25 13:26:30,009 - data_pre_processing - INFO - Fetching data for period: 2024-05-26
+2025-09-25 13:26:30,214 - data_pre_processing - INFO - Fetching data for period: 2024-05-27
+2025-09-25 13:26:30,404 - data_pre_processing - INFO - Fetching data for period: 2024-05-28
+2025-09-25 13:26:30,584 - data_pre_processing - INFO - Fetching data for period: 2024-05-29
+2025-09-25 13:26:30,779 - data_pre_processing - INFO - Fetching data for period: 2024-05-30
+2025-09-25 13:26:30,969 - data_pre_processing - INFO - Fetching data for period: 2024-05-31
+2025-09-25 13:26:31,177 - data_pre_processing - INFO - Fetching data for period: 2024-06-01
+2025-09-25 13:26:31,377 - data_pre_processing - INFO - Fetching data for period: 2024-06-02
+2025-09-25 13:26:31,583 - data_pre_processing - INFO - Fetching data for period: 2024-06-03
+2025-09-25 13:26:31,783 - data_pre_processing - INFO - Fetching data for period: 2024-06-04
+2025-09-25 13:26:31,996 - data_pre_processing - INFO - Fetching data for period: 2024-06-05
+2025-09-25 13:26:32,199 - data_pre_processing - INFO - Fetching data for period: 2024-06-06
+2025-09-25 13:26:32,402 - data_pre_processing - INFO - Fetching data for period: 2024-06-07
+2025-09-25 13:26:32,587 - data_pre_processing - INFO - Fetching data for period: 2024-06-08
+2025-09-25 13:26:32,788 - data_pre_processing - INFO - Fetching data for period: 2024-06-09
+2025-09-25 13:26:32,990 - data_pre_processing - INFO - Fetching data for period: 2024-06-10
+2025-09-25 13:26:33,172 - data_pre_processing - INFO - Fetching data for period: 2024-06-11
+2025-09-25 13:26:33,434 - data_pre_processing - INFO - Fetching data for period: 2024-06-12
+2025-09-25 13:26:33,642 - data_pre_processing - INFO - Fetching data for period: 2024-06-13
+2025-09-25 13:26:33,858 - data_pre_processing - INFO - Fetching data for period: 2024-06-14
+2025-09-25 13:26:34,050 - data_pre_processing - INFO - Fetching data for period: 2024-06-15
+2025-09-25 13:26:34,237 - data_pre_processing - INFO - Fetching data for period: 2024-06-16
+2025-09-25 13:26:34,438 - data_pre_processing - INFO - Fetching data for period: 2024-06-17
+2025-09-25 13:26:34,722 - data_pre_processing - INFO - Fetching data for period: 2024-06-18
+2025-09-25 13:26:34,906 - data_pre_processing - INFO - Fetching data for period: 2024-06-19
+2025-09-25 13:26:35,094 - data_pre_processing - INFO - Fetching data for period: 2024-06-20
+2025-09-25 13:26:35,294 - data_pre_processing - INFO - Fetching data for period: 2024-06-21
+2025-09-25 13:26:35,498 - data_pre_processing - INFO - Fetching data for period: 2024-06-22
+2025-09-25 13:26:35,687 - data_pre_processing - INFO - Fetching data for period: 2024-06-23
+2025-09-25 13:26:35,868 - data_pre_processing - INFO - Fetching data for period: 2024-06-24
+2025-09-25 13:26:36,211 - data_pre_processing - INFO - Fetching data for period: 2024-06-25
+2025-09-25 13:26:36,470 - data_pre_processing - INFO - Fetching data for period: 2024-06-26
+2025-09-25 13:26:36,686 - data_pre_processing - INFO - Fetching data for period: 2024-06-27
+2025-09-25 13:26:36,864 - data_pre_processing - INFO - Fetching data for period: 2024-06-28
+2025-09-25 13:26:37,042 - data_pre_processing - INFO - Fetching data for period: 2024-06-29
+2025-09-25 13:26:37,251 - data_pre_processing - INFO - Fetching data for period: 2024-06-30
+2025-09-25 13:26:37,464 - data_pre_processing - INFO - Fetching data for period: 2024-07-01
+2025-09-25 13:26:37,683 - data_pre_processing - INFO - Fetching data for period: 2024-07-02
+2025-09-25 13:26:37,873 - data_pre_processing - INFO - Fetching data for period: 2024-07-03
+2025-09-25 13:26:38,065 - data_pre_processing - INFO - Fetching data for period: 2024-07-04
+2025-09-25 13:26:38,253 - data_pre_processing - INFO - Fetching data for period: 2024-07-05
+2025-09-25 13:26:38,491 - data_pre_processing - INFO - Fetching data for period: 2024-07-06
+2025-09-25 13:26:38,681 - data_pre_processing - INFO - Fetching data for period: 2024-07-07
+2025-09-25 13:26:38,873 - data_pre_processing - INFO - Fetching data for period: 2024-07-08
+2025-09-25 13:26:39,067 - data_pre_processing - INFO - Fetching data for period: 2024-07-09
+2025-09-25 13:26:39,292 - data_pre_processing - INFO - Fetching data for period: 2024-07-10
+2025-09-25 13:26:39,525 - data_pre_processing - INFO - Fetching data for period: 2024-07-11
+2025-09-25 13:26:39,767 - data_pre_processing - INFO - Fetching data for period: 2024-07-12
+2025-09-25 13:26:40,199 - data_pre_processing - INFO - Fetching data for period: 2024-07-13
+2025-09-25 13:26:40,381 - data_pre_processing - INFO - Fetching data for period: 2024-07-14
+2025-09-25 13:26:40,566 - data_pre_processing - INFO - Fetching data for period: 2024-07-15
+2025-09-25 13:26:40,754 - data_pre_processing - INFO - Fetching data for period: 2024-07-16
+2025-09-25 13:26:40,945 - data_pre_processing - INFO - Fetching data for period: 2024-07-17
+2025-09-25 13:26:41,151 - data_pre_processing - INFO - Fetching data for period: 2024-07-18
+2025-09-25 13:26:41,333 - data_pre_processing - INFO - Fetching data for period: 2024-07-19
+2025-09-25 13:26:41,524 - data_pre_processing - INFO - Fetching data for period: 2024-07-20
+2025-09-25 13:26:41,741 - data_pre_processing - INFO - Fetching data for period: 2024-07-21
+2025-09-25 13:26:41,969 - data_pre_processing - INFO - Fetching data for period: 2024-07-22
+2025-09-25 13:26:42,168 - data_pre_processing - INFO - Fetching data for period: 2024-07-23
+2025-09-25 13:26:42,459 - data_pre_processing - INFO - Fetching data for period: 2024-07-24
+2025-09-25 13:26:42,711 - data_pre_processing - INFO - Fetching data for period: 2024-07-25
+2025-09-25 13:26:42,945 - data_pre_processing - INFO - Fetching data for period: 2024-07-26
+2025-09-25 13:26:43,139 - data_pre_processing - INFO - Fetching data for period: 2024-07-27
+2025-09-25 13:26:43,329 - data_pre_processing - INFO - Fetching data for period: 2024-07-28
+2025-09-25 13:26:43,534 - data_pre_processing - INFO - Fetching data for period: 2024-07-29
+2025-09-25 13:26:43,731 - data_pre_processing - INFO - Fetching data for period: 2024-07-30
+2025-09-25 13:26:43,912 - data_pre_processing - INFO - Fetching data for period: 2024-07-31
+2025-09-25 13:26:44,116 - data_pre_processing - INFO - Fetching data for period: 2024-08-01
+2025-09-25 13:26:44,316 - data_pre_processing - INFO - Fetching data for period: 2024-08-02
+2025-09-25 13:26:44,525 - data_pre_processing - INFO - Fetching data for period: 2024-08-03
+2025-09-25 13:26:44,717 - data_pre_processing - INFO - Fetching data for period: 2024-08-04
+2025-09-25 13:26:44,905 - data_pre_processing - INFO - Fetching data for period: 2024-08-05
+2025-09-25 13:26:45,105 - data_pre_processing - INFO - Fetching data for period: 2024-08-06
+2025-09-25 13:26:45,295 - data_pre_processing - INFO - Fetching data for period: 2024-08-07
+2025-09-25 13:26:45,487 - data_pre_processing - INFO - Fetching data for period: 2024-08-08
+2025-09-25 13:26:45,704 - data_pre_processing - INFO - Fetching data for period: 2024-08-09
+2025-09-25 13:26:45,902 - data_pre_processing - INFO - Fetching data for period: 2024-08-10
+2025-09-25 13:26:46,096 - data_pre_processing - INFO - Fetching data for period: 2024-08-11
+2025-09-25 13:26:46,302 - data_pre_processing - INFO - Fetching data for period: 2024-08-12
+2025-09-25 13:26:46,719 - data_pre_processing - INFO - Fetching data for period: 2024-08-13
+2025-09-25 13:26:46,903 - data_pre_processing - INFO - Fetching data for period: 2024-08-14
+2025-09-25 13:26:47,087 - data_pre_processing - INFO - Fetching data for period: 2024-08-15
+2025-09-25 13:26:47,284 - data_pre_processing - INFO - Fetching data for period: 2024-08-16
+2025-09-25 13:26:47,477 - data_pre_processing - INFO - Fetching data for period: 2024-08-17
+2025-09-25 13:26:47,786 - data_pre_processing - INFO - Fetching data for period: 2024-08-18
+2025-09-25 13:26:47,989 - data_pre_processing - INFO - Fetching data for period: 2024-08-19
+2025-09-25 13:26:48,182 - data_pre_processing - INFO - Fetching data for period: 2024-08-20
+2025-09-25 13:26:48,424 - data_pre_processing - INFO - Fetching data for period: 2024-08-21
+2025-09-25 13:26:48,656 - data_pre_processing - INFO - Fetching data for period: 2024-08-22
+2025-09-25 13:26:48,852 - data_pre_processing - INFO - Fetching data for period: 2024-08-23
+2025-09-25 13:26:49,030 - data_pre_processing - INFO - Fetching data for period: 2024-08-24
+2025-09-25 13:26:49,234 - data_pre_processing - INFO - Fetching data for period: 2024-08-25
+2025-09-25 13:26:49,437 - data_pre_processing - INFO - Fetching data for period: 2024-08-26
+2025-09-25 13:26:49,621 - data_pre_processing - INFO - Fetching data for period: 2024-08-27
+2025-09-25 13:26:49,819 - data_pre_processing - INFO - Fetching data for period: 2024-08-28
+2025-09-25 13:26:50,010 - data_pre_processing - INFO - Fetching data for period: 2024-08-29
+2025-09-25 13:26:50,226 - data_pre_processing - INFO - Fetching data for period: 2024-08-30
+2025-09-25 13:26:50,412 - data_pre_processing - INFO - Fetching data for period: 2024-08-31
+2025-09-25 13:26:50,611 - data_pre_processing - INFO - Fetching data for period: 2024-09-01
+2025-09-25 13:26:50,800 - data_pre_processing - INFO - Fetching data for period: 2024-09-02
+2025-09-25 13:26:51,056 - data_pre_processing - INFO - Fetching data for period: 2024-09-03
+2025-09-25 13:26:51,276 - data_pre_processing - INFO - Fetching data for period: 2024-09-04
+2025-09-25 13:26:51,472 - data_pre_processing - INFO - Fetching data for period: 2024-09-05
+2025-09-25 13:26:51,660 - data_pre_processing - INFO - Fetching data for period: 2024-09-06
+2025-09-25 13:26:51,911 - data_pre_processing - INFO - Fetching data for period: 2024-09-07
+2025-09-25 13:26:52,103 - data_pre_processing - INFO - Fetching data for period: 2024-09-08
+2025-09-25 13:26:52,309 - data_pre_processing - INFO - Fetching data for period: 2024-09-09
+2025-09-25 13:26:52,772 - data_pre_processing - INFO - Fetching data for period: 2024-09-10
+2025-09-25 13:26:52,960 - data_pre_processing - INFO - Fetching data for period: 2024-09-11
+2025-09-25 13:26:53,186 - data_pre_processing - INFO - Fetching data for period: 2024-09-12
+2025-09-25 13:26:53,379 - data_pre_processing - INFO - Fetching data for period: 2024-09-13
+2025-09-25 13:26:53,574 - data_pre_processing - INFO - Fetching data for period: 2024-09-14
+2025-09-25 13:26:53,791 - data_pre_processing - INFO - Fetching data for period: 2024-09-15
+2025-09-25 13:26:54,031 - data_pre_processing - INFO - Fetching data for period: 2024-09-16
+2025-09-25 13:26:54,241 - data_pre_processing - INFO - Fetching data for period: 2024-09-17
+2025-09-25 13:26:54,437 - data_pre_processing - INFO - Fetching data for period: 2024-09-18
+2025-09-25 13:26:54,630 - data_pre_processing - INFO - Fetching data for period: 2024-09-19
+2025-09-25 13:26:54,813 - data_pre_processing - INFO - Fetching data for period: 2024-09-20
+2025-09-25 13:26:55,018 - data_pre_processing - INFO - Fetching data for period: 2024-09-21
+2025-09-25 13:26:55,212 - data_pre_processing - INFO - Fetching data for period: 2024-09-22
+2025-09-25 13:26:55,406 - data_pre_processing - INFO - Fetching data for period: 2024-09-23
+2025-09-25 13:26:55,596 - data_pre_processing - INFO - Fetching data for period: 2024-09-24
+2025-09-25 13:26:55,792 - data_pre_processing - INFO - Fetching data for period: 2024-09-25
+2025-09-25 13:26:55,988 - data_pre_processing - INFO - Fetching data for period: 2024-09-26
+2025-09-25 13:26:56,218 - data_pre_processing - INFO - Fetching data for period: 2024-09-27
+2025-09-25 13:26:56,408 - data_pre_processing - INFO - Fetching data for period: 2024-09-28
+2025-09-25 13:26:56,613 - data_pre_processing - INFO - Fetching data for period: 2024-09-29
+2025-09-25 13:26:56,801 - data_pre_processing - INFO - Fetching data for period: 2024-09-30
+2025-09-25 13:26:57,046 - data_pre_processing - INFO - Fetching data for period: 2024-10-01
+2025-09-25 13:26:57,255 - data_pre_processing - INFO - Fetching data for period: 2024-10-02
+2025-09-25 13:26:57,471 - data_pre_processing - INFO - Fetching data for period: 2024-10-03
+2025-09-25 13:26:57,667 - data_pre_processing - INFO - Fetching data for period: 2024-10-04
+2025-09-25 13:26:57,872 - data_pre_processing - INFO - Fetching data for period: 2024-10-05
+2025-09-25 13:26:58,056 - data_pre_processing - INFO - Fetching data for period: 2024-10-06
+2025-09-25 13:26:58,241 - data_pre_processing - INFO - Fetching data for period: 2024-10-07
+2025-09-25 13:26:58,476 - data_pre_processing - INFO - Fetching data for period: 2024-10-08
+2025-09-25 13:26:58,673 - data_pre_processing - INFO - Fetching data for period: 2024-10-09
+2025-09-25 13:26:58,858 - data_pre_processing - INFO - Fetching data for period: 2024-10-10
+2025-09-25 13:26:59,122 - data_pre_processing - INFO - Fetching data for period: 2024-10-11
+2025-09-25 13:26:59,308 - data_pre_processing - INFO - Fetching data for period: 2024-10-12
+2025-09-25 13:26:59,736 - data_pre_processing - INFO - Fetching data for period: 2024-10-13
+2025-09-25 13:26:59,933 - data_pre_processing - INFO - Fetching data for period: 2024-10-14
+2025-09-25 13:27:00,123 - data_pre_processing - INFO - Fetching data for period: 2024-10-15
+2025-09-25 13:27:00,320 - data_pre_processing - INFO - Fetching data for period: 2024-10-16
+2025-09-25 13:27:00,508 - data_pre_processing - INFO - Fetching data for period: 2024-10-17
+2025-09-25 13:27:00,853 - data_pre_processing - INFO - Fetching data for period: 2024-10-18
+2025-09-25 13:27:01,059 - data_pre_processing - INFO - Fetching data for period: 2024-10-19
+2025-09-25 13:27:01,351 - data_pre_processing - INFO - Fetching data for period: 2024-10-20
+2025-09-25 13:27:01,639 - data_pre_processing - INFO - Fetching data for period: 2024-10-21
+2025-09-25 13:27:01,909 - data_pre_processing - INFO - Fetching data for period: 2024-10-22
+2025-09-25 13:27:02,114 - data_pre_processing - INFO - Fetching data for period: 2024-10-23
+2025-09-25 13:27:02,337 - data_pre_processing - INFO - Fetching data for period: 2024-10-24
+2025-09-25 13:27:02,612 - data_pre_processing - INFO - Fetching data for period: 2024-10-25
+2025-09-25 13:27:02,822 - data_pre_processing - INFO - Fetching data for period: 2024-10-26
+2025-09-25 13:27:03,026 - data_pre_processing - INFO - Fetching data for period: 2024-10-27
+2025-09-25 13:27:03,218 - data_pre_processing - INFO - Fetching data for period: 2024-10-28
+2025-09-25 13:27:03,432 - data_pre_processing - INFO - Fetching data for period: 2024-10-29
+2025-09-25 13:27:03,640 - data_pre_processing - INFO - Fetching data for period: 2024-10-30
+2025-09-25 13:27:03,855 - data_pre_processing - INFO - Fetching data for period: 2024-10-31
+2025-09-25 13:27:04,054 - data_pre_processing - INFO - Fetching data for period: 2024-11-01
+2025-09-25 13:27:04,241 - data_pre_processing - INFO - Fetching data for period: 2024-11-02
+2025-09-25 13:27:04,429 - data_pre_processing - INFO - Fetching data for period: 2024-11-03
+2025-09-25 13:27:04,667 - data_pre_processing - INFO - Fetching data for period: 2024-11-04
+2025-09-25 13:27:04,875 - data_pre_processing - INFO - Fetching data for period: 2024-11-05
+2025-09-25 13:27:05,102 - data_pre_processing - INFO - Fetching data for period: 2024-11-06
+2025-09-25 13:27:05,291 - data_pre_processing - INFO - Fetching data for period: 2024-11-07
+2025-09-25 13:27:05,474 - data_pre_processing - INFO - Fetching data for period: 2024-11-08
+2025-09-25 13:27:05,674 - data_pre_processing - INFO - Fetching data for period: 2024-11-09
+2025-09-25 13:27:06,177 - data_pre_processing - INFO - Fetching data for period: 2024-11-10
+2025-09-25 13:27:06,377 - data_pre_processing - INFO - Fetching data for period: 2024-11-11
+2025-09-25 13:27:06,575 - data_pre_processing - INFO - Fetching data for period: 2024-11-12
+2025-09-25 13:27:06,783 - data_pre_processing - INFO - Fetching data for period: 2024-11-13
+2025-09-25 13:27:07,005 - data_pre_processing - INFO - Fetching data for period: 2024-11-14
+2025-09-25 13:27:07,487 - data_pre_processing - INFO - Fetching data for period: 2024-11-15
+2025-09-25 13:27:07,680 - data_pre_processing - INFO - Fetching data for period: 2024-11-16
+2025-09-25 13:27:07,911 - data_pre_processing - INFO - Fetching data for period: 2024-11-17
+2025-09-25 13:27:08,111 - data_pre_processing - INFO - Fetching data for period: 2024-11-18
+2025-09-25 13:27:08,323 - data_pre_processing - INFO - Fetching data for period: 2024-11-19
+2025-09-25 13:27:08,548 - data_pre_processing - INFO - Fetching data for period: 2024-11-20
+2025-09-25 13:27:08,776 - data_pre_processing - INFO - Fetching data for period: 2024-11-21
+2025-09-25 13:27:08,992 - data_pre_processing - INFO - Fetching data for period: 2024-11-22
+2025-09-25 13:27:09,196 - data_pre_processing - INFO - Fetching data for period: 2024-11-23
+2025-09-25 13:27:09,413 - data_pre_processing - INFO - Fetching data for period: 2024-11-24
+2025-09-25 13:27:09,641 - data_pre_processing - INFO - Fetching data for period: 2024-11-25
+2025-09-25 13:27:09,835 - data_pre_processing - INFO - Fetching data for period: 2024-11-26
+2025-09-25 13:27:10,034 - data_pre_processing - INFO - Fetching data for period: 2024-11-27
+2025-09-25 13:27:10,274 - data_pre_processing - INFO - Fetching data for period: 2024-11-28
+2025-09-25 13:27:10,541 - data_pre_processing - INFO - Fetching data for period: 2024-11-29
+2025-09-25 13:27:10,768 - data_pre_processing - INFO - Fetching data for period: 2024-11-30
+2025-09-25 13:27:10,962 - data_pre_processing - INFO - Fetching data for period: 2024-12-01
+2025-09-25 13:27:11,165 - data_pre_processing - INFO - Fetching data for period: 2024-12-02
+2025-09-25 13:27:11,359 - data_pre_processing - INFO - Fetching data for period: 2024-12-03
+2025-09-25 13:27:11,564 - data_pre_processing - INFO - Fetching data for period: 2024-12-04
+2025-09-25 13:27:11,764 - data_pre_processing - INFO - Fetching data for period: 2024-12-05
+2025-09-25 13:27:11,973 - data_pre_processing - INFO - Fetching data for period: 2024-12-06
+2025-09-25 13:27:12,187 - data_pre_processing - INFO - Fetching data for period: 2024-12-07
+2025-09-25 13:27:12,382 - data_pre_processing - INFO - Fetching data for period: 2024-12-08
+2025-09-25 13:27:12,574 - data_pre_processing - INFO - Fetching data for period: 2024-12-09
+2025-09-25 13:27:12,779 - data_pre_processing - INFO - Fetching data for period: 2024-12-10
+2025-09-25 13:27:12,982 - data_pre_processing - INFO - Fetching data for period: 2024-12-11
+2025-09-25 13:27:13,577 - data_pre_processing - INFO - Fetching data for period: 2024-12-12
+2025-09-25 13:27:13,785 - data_pre_processing - INFO - Fetching data for period: 2024-12-13
+2025-09-25 13:27:13,964 - data_pre_processing - INFO - Fetching data for period: 2024-12-14
+2025-09-25 13:27:14,165 - data_pre_processing - INFO - Fetching data for period: 2024-12-15
+2025-09-25 13:27:14,362 - data_pre_processing - INFO - Fetching data for period: 2024-12-16
+2025-09-25 13:27:14,545 - data_pre_processing - INFO - Fetching data for period: 2024-12-17
+2025-09-25 13:27:14,779 - data_pre_processing - INFO - Fetching data for period: 2024-12-18
+2025-09-25 13:27:15,010 - data_pre_processing - INFO - Fetching data for period: 2024-12-19
+2025-09-25 13:27:15,209 - data_pre_processing - INFO - Fetching data for period: 2024-12-20
+2025-09-25 13:27:15,433 - data_pre_processing - INFO - Fetching data for period: 2024-12-21
+2025-09-25 13:27:15,621 - data_pre_processing - INFO - Fetching data for period: 2024-12-22
+2025-09-25 13:27:15,810 - data_pre_processing - INFO - Fetching data for period: 2024-12-23
+2025-09-25 13:27:16,012 - data_pre_processing - INFO - Fetching data for period: 2024-12-24
+2025-09-25 13:27:16,208 - data_pre_processing - INFO - Fetching data for period: 2024-12-25
+2025-09-25 13:27:16,474 - data_pre_processing - INFO - Fetching data for period: 2024-12-26
+2025-09-25 13:27:16,697 - data_pre_processing - INFO - Fetching data for period: 2024-12-27
+2025-09-25 13:27:16,886 - data_pre_processing - INFO - Fetching data for period: 2024-12-28
+2025-09-25 13:27:17,068 - data_pre_processing - INFO - Fetching data for period: 2024-12-29
+2025-09-25 13:27:17,263 - data_pre_processing - INFO - Fetching data for period: 2024-12-30
+2025-09-25 13:27:17,454 - data_pre_processing - INFO - Fetching data for period: 2024-12-31
+2025-09-25 13:27:17,643 - data_pre_processing - INFO - Fetching data for period: 2025-01-01
+2025-09-25 13:27:18,170 - data_pre_processing - INFO - Fetching data for period: 2025-01-02
+2025-09-25 13:27:18,388 - data_pre_processing - INFO - Fetching data for period: 2025-01-03
+2025-09-25 13:27:18,620 - data_pre_processing - INFO - Fetching data for period: 2025-01-04
+2025-09-25 13:27:18,812 - data_pre_processing - INFO - Fetching data for period: 2025-01-05
+2025-09-25 13:27:19,008 - data_pre_processing - INFO - Fetching data for period: 2025-01-06
+2025-09-25 13:27:19,198 - data_pre_processing - INFO - Fetching data for period: 2025-01-07
+2025-09-25 13:27:19,389 - data_pre_processing - INFO - Fetching data for period: 2025-01-08
+2025-09-25 13:27:19,584 - data_pre_processing - INFO - Fetching data for period: 2025-01-09
+2025-09-25 13:27:19,827 - data_pre_processing - INFO - Fetching data for period: 2025-01-10
+2025-09-25 13:27:20,017 - data_pre_processing - INFO - Fetching data for period: 2025-01-11
+2025-09-25 13:27:20,197 - data_pre_processing - INFO - Fetching data for period: 2025-01-12
+2025-09-25 13:27:20,405 - data_pre_processing - INFO - Fetching data for period: 2025-01-13
+2025-09-25 13:27:20,592 - data_pre_processing - INFO - Fetching data for period: 2025-01-14
+2025-09-25 13:27:20,674 - data_pre_processing - ERROR - Unexpected error during data processing: "None of [Index(['date', 'charged', 'drained'], dtype='object')] are in the [columns]"
+Traceback (most recent call last):
+  File "c:\Users\rfo7799\Desktop\Git\HealthData\data_pre_processing.py", line 131, in preprocessing_garmin_data
+    bb_df = bb_df[['date','charged','drained']]
+            ~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "c:\Users\rfo7799\AppData\Local\Programs\Python\Python311\Lib\site-packages\pandas\core\frame.py", line 3813, in __getitem__
+    indexer = self.columns._get_indexer_strict(key, "columns")[1]
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "c:\Users\rfo7799\AppData\Local\Programs\Python\Python311\Lib\site-packages\pandas\core\indexes\base.py", line 6070, in _get_indexer_strict
+    self._raise_if_missing(keyarr, indexer, axis_name)
+  File "c:\Users\rfo7799\AppData\Local\Programs\Python\Python311\Lib\site-packages\pandas\core\indexes\base.py", line 6130, in _raise_if_missing
+    raise KeyError(f"None of [{key}] are in the [{axis_name}]")
+KeyError: "None of [Index(['date', 'charged', 'drained'], dtype='object')] are in the [columns]"
+2025-09-25 13:27:20,766 - data_pre_processing - INFO - Fetching data for period: 2025-01-15
+2025-09-25 13:27:20,963 - data_pre_processing - INFO - Fetching data for period: 2025-01-16
+2025-09-25 13:27:21,163 - data_pre_processing - INFO - Fetching data for period: 2025-01-17
+2025-09-25 13:27:21,366 - data_pre_processing - INFO - Fetching data for period: 2025-01-18
+2025-09-25 13:27:21,591 - data_pre_processing - INFO - Fetching data for period: 2025-01-19
+2025-09-25 13:27:21,792 - data_pre_processing - INFO - Fetching data for period: 2025-01-20
+2025-09-25 13:27:22,014 - data_pre_processing - INFO - Fetching data for period: 2025-01-21
+2025-09-25 13:27:22,214 - data_pre_processing - INFO - Fetching data for period: 2025-01-22
+2025-09-25 13:27:22,416 - data_pre_processing - INFO - Fetching data for period: 2025-01-23
+2025-09-25 13:27:22,607 - data_pre_processing - INFO - Fetching data for period: 2025-01-24
+2025-09-25 13:27:22,817 - data_pre_processing - INFO - Fetching data for period: 2025-01-25
+2025-09-25 13:27:23,045 - data_pre_processing - INFO - Fetching data for period: 2025-01-26
+2025-09-25 13:27:23,241 - data_pre_processing - INFO - Fetching data for period: 2025-01-27
+2025-09-25 13:27:23,437 - data_pre_processing - INFO - Fetching data for period: 2025-01-28
+2025-09-25 13:27:23,766 - data_pre_processing - INFO - Fetching data for period: 2025-01-29
+2025-09-25 13:27:24,016 - data_pre_processing - INFO - Fetching data for period: 2025-01-30
+2025-09-25 13:27:24,221 - data_pre_processing - INFO - Fetching data for period: 2025-01-31
+2025-09-25 13:27:24,479 - data_pre_processing - INFO - Fetching data for period: 2025-02-01
+2025-09-25 13:27:24,660 - data_pre_processing - INFO - Fetching data for period: 2025-02-02
+2025-09-25 13:27:24,848 - data_pre_processing - INFO - Fetching data for period: 2025-02-03
+2025-09-25 13:27:25,076 - data_pre_processing - INFO - Fetching data for period: 2025-02-04
+2025-09-25 13:27:25,275 - data_pre_processing - INFO - Fetching data for period: 2025-02-05
+2025-09-25 13:27:25,481 - data_pre_processing - INFO - Fetching data for period: 2025-02-06
+2025-09-25 13:27:25,674 - data_pre_processing - INFO - Fetching data for period: 2025-02-07
+2025-09-25 13:27:25,862 - data_pre_processing - INFO - Fetching data for period: 2025-02-08
+2025-09-25 13:27:26,062 - data_pre_processing - INFO - Fetching data for period: 2025-02-09
+2025-09-25 13:27:26,263 - data_pre_processing - INFO - Fetching data for period: 2025-02-10
+2025-09-25 13:27:26,455 - data_pre_processing - INFO - Fetching data for period: 2025-02-11
+2025-09-25 13:27:26,652 - data_pre_processing - INFO - Fetching data for period: 2025-02-12
+2025-09-25 13:27:26,838 - data_pre_processing - INFO - Fetching data for period: 2025-02-13
+2025-09-25 13:27:27,043 - data_pre_processing - INFO - Fetching data for period: 2025-02-14
+2025-09-25 13:27:27,286 - data_pre_processing - INFO - Fetching data for period: 2025-02-15
+2025-09-25 13:27:27,498 - data_pre_processing - INFO - Fetching data for period: 2025-02-16
+2025-09-25 13:27:27,698 - data_pre_processing - INFO - Fetching data for period: 2025-02-17
+2025-09-25 13:27:27,877 - data_pre_processing - INFO - Fetching data for period: 2025-02-18
+2025-09-25 13:27:28,073 - data_pre_processing - INFO - Fetching data for period: 2025-02-19
+2025-09-25 13:27:28,311 - data_pre_processing - INFO - Fetching data for period: 2025-02-20
+2025-09-25 13:27:28,498 - data_pre_processing - INFO - Fetching data for period: 2025-02-21
+2025-09-25 13:27:28,713 - data_pre_processing - INFO - Fetching data for period: 2025-02-22
+2025-09-25 13:27:28,920 - data_pre_processing - INFO - Fetching data for period: 2025-02-23
+2025-09-25 13:27:29,148 - data_pre_processing - INFO - Fetching data for period: 2025-02-24
+2025-09-25 13:27:29,350 - data_pre_processing - INFO - Fetching data for period: 2025-02-25
+2025-09-25 13:27:29,546 - data_pre_processing - INFO - Fetching data for period: 2025-02-26
+2025-09-25 13:27:29,758 - data_pre_processing - INFO - Fetching data for period: 2025-02-27
+2025-09-25 13:27:29,979 - data_pre_processing - INFO - Fetching data for period: 2025-02-28
+2025-09-25 13:27:30,228 - data_pre_processing - INFO - Fetching data for period: 2025-03-01
+2025-09-25 13:27:30,413 - data_pre_processing - INFO - Fetching data for period: 2025-03-02
+2025-09-25 13:27:30,606 - data_pre_processing - INFO - Fetching data for period: 2025-03-03
+2025-09-25 13:27:30,799 - data_pre_processing - INFO - Fetching data for period: 2025-03-04
+2025-09-25 13:27:31,000 - data_pre_processing - INFO - Fetching data for period: 2025-03-05
+2025-09-25 13:27:31,215 - data_pre_processing - INFO - Fetching data for period: 2025-03-06
+2025-09-25 13:27:31,415 - data_pre_processing - INFO - Fetching data for period: 2025-03-07
+2025-09-25 13:27:31,630 - data_pre_processing - INFO - Fetching data for period: 2025-03-08
+2025-09-25 13:27:31,893 - data_pre_processing - INFO - Fetching data for period: 2025-03-09
+2025-09-25 13:27:32,117 - data_pre_processing - INFO - Fetching data for period: 2025-03-10
+2025-09-25 13:27:32,311 - data_pre_processing - INFO - Fetching data for period: 2025-03-11
+2025-09-25 13:27:32,523 - data_pre_processing - INFO - Fetching data for period: 2025-03-12
+2025-09-25 13:27:32,718 - data_pre_processing - INFO - Fetching data for period: 2025-03-13
+2025-09-25 13:27:32,917 - data_pre_processing - INFO - Fetching data for period: 2025-03-14
+2025-09-25 13:27:33,164 - data_pre_processing - INFO - Fetching data for period: 2025-03-15
+2025-09-25 13:27:33,351 - data_pre_processing - INFO - Fetching data for period: 2025-03-16
+2025-09-25 13:27:33,533 - data_pre_processing - INFO - Fetching data for period: 2025-03-17
+2025-09-25 13:27:33,727 - data_pre_processing - INFO - Fetching data for period: 2025-03-18
+2025-09-25 13:27:33,916 - data_pre_processing - INFO - Fetching data for period: 2025-03-19
+2025-09-25 13:27:34,148 - data_pre_processing - INFO - Fetching data for period: 2025-03-20
+2025-09-25 13:27:34,337 - data_pre_processing - INFO - Fetching data for period: 2025-03-21
+2025-09-25 13:27:34,583 - data_pre_processing - INFO - Fetching data for period: 2025-03-22
+2025-09-25 13:27:34,764 - data_pre_processing - INFO - Fetching data for period: 2025-03-23
+2025-09-25 13:27:34,963 - data_pre_processing - INFO - Fetching data for period: 2025-03-24
+2025-09-25 13:27:35,192 - data_pre_processing - INFO - Fetching data for period: 2025-03-25
+2025-09-25 13:27:35,400 - data_pre_processing - INFO - Fetching data for period: 2025-03-26
+2025-09-25 13:27:35,592 - data_pre_processing - INFO - Fetching data for period: 2025-03-27
+2025-09-25 13:27:35,781 - data_pre_processing - INFO - Fetching data for period: 2025-03-28
+2025-09-25 13:27:35,977 - data_pre_processing - INFO - Fetching data for period: 2025-03-29
+2025-09-25 13:27:36,176 - data_pre_processing - INFO - Fetching data for period: 2025-03-30
+2025-09-25 13:27:36,402 - data_pre_processing - INFO - Fetching data for period: 2025-03-31
+2025-09-25 13:27:36,611 - data_pre_processing - INFO - Fetching data for period: 2025-04-01
+2025-09-25 13:27:36,842 - data_pre_processing - INFO - Fetching data for period: 2025-04-02
+2025-09-25 13:27:37,040 - data_pre_processing - INFO - Fetching data for period: 2025-04-03
+2025-09-25 13:27:37,221 - data_pre_processing - INFO - Fetching data for period: 2025-04-04
+2025-09-25 13:27:37,426 - data_pre_processing - INFO - Fetching data for period: 2025-04-05
+2025-09-25 13:27:37,634 - data_pre_processing - INFO - Fetching data for period: 2025-04-06
+2025-09-25 13:27:37,846 - data_pre_processing - INFO - Fetching data for period: 2025-04-07
+2025-09-25 13:27:38,044 - data_pre_processing - INFO - Fetching data for period: 2025-04-08
+2025-09-25 13:27:38,236 - data_pre_processing - INFO - Fetching data for period: 2025-04-09
+2025-09-25 13:27:38,433 - data_pre_processing - INFO - Fetching data for period: 2025-04-10
+2025-09-25 13:27:38,633 - data_pre_processing - INFO - Fetching data for period: 2025-04-11
+2025-09-25 13:27:38,834 - data_pre_processing - INFO - Fetching data for period: 2025-04-12
+2025-09-25 13:27:39,044 - data_pre_processing - INFO - Fetching data for period: 2025-04-13
+2025-09-25 13:27:39,287 - data_pre_processing - INFO - Fetching data for period: 2025-04-14
+2025-09-25 13:27:39,499 - data_pre_processing - INFO - Fetching data for period: 2025-04-15
+2025-09-25 13:27:39,682 - data_pre_processing - INFO - Fetching data for period: 2025-04-16
+2025-09-25 13:27:39,877 - data_pre_processing - INFO - Fetching data for period: 2025-04-17
+2025-09-25 13:27:40,065 - data_pre_processing - INFO - Fetching data for period: 2025-04-18
+2025-09-25 13:27:40,320 - data_pre_processing - INFO - Fetching data for period: 2025-04-19
+2025-09-25 13:27:40,529 - data_pre_processing - INFO - Fetching data for period: 2025-04-20
+2025-09-25 13:27:40,718 - data_pre_processing - INFO - Fetching data for period: 2025-04-21
+2025-09-25 13:27:40,919 - data_pre_processing - INFO - Fetching data for period: 2025-04-22
+2025-09-25 13:27:41,107 - data_pre_processing - INFO - Fetching data for period: 2025-04-23
+2025-09-25 13:27:41,317 - data_pre_processing - INFO - Fetching data for period: 2025-04-24
+2025-09-25 13:27:41,518 - data_pre_processing - INFO - Fetching data for period: 2025-04-25
+2025-09-25 13:27:41,727 - data_pre_processing - INFO - Fetching data for period: 2025-04-26
+2025-09-25 13:27:41,926 - data_pre_processing - INFO - Fetching data for period: 2025-04-27
+2025-09-25 13:27:42,120 - data_pre_processing - INFO - Fetching data for period: 2025-04-28
+2025-09-25 13:27:42,351 - data_pre_processing - INFO - Fetching data for period: 2025-04-29
+2025-09-25 13:27:42,552 - data_pre_processing - INFO - Fetching data for period: 2025-04-30
+2025-09-25 13:27:42,751 - data_pre_processing - INFO - Fetching data for period: 2025-05-01
+2025-09-25 13:27:43,084 - data_pre_processing - INFO - Fetching data for period: 2025-05-02
+2025-09-25 13:27:43,295 - data_pre_processing - INFO - Fetching data for period: 2025-05-03
+2025-09-25 13:27:43,546 - data_pre_processing - INFO - Fetching data for period: 2025-05-04
+2025-09-25 13:27:43,770 - data_pre_processing - INFO - Fetching data for period: 2025-05-05
+2025-09-25 13:27:43,987 - data_pre_processing - INFO - Fetching data for period: 2025-05-06
+2025-09-25 13:27:44,195 - data_pre_processing - INFO - Fetching data for period: 2025-05-07
+2025-09-25 13:27:44,401 - data_pre_processing - INFO - Fetching data for period: 2025-05-08
+2025-09-25 13:27:44,618 - data_pre_processing - INFO - Fetching data for period: 2025-05-09
+2025-09-25 13:27:44,835 - data_pre_processing - INFO - Fetching data for period: 2025-05-10
+2025-09-25 13:27:45,087 - data_pre_processing - INFO - Fetching data for period: 2025-05-11
+2025-09-25 13:27:45,331 - data_pre_processing - INFO - Fetching data for period: 2025-05-12
+2025-09-25 13:27:45,541 - data_pre_processing - INFO - Fetching data for period: 2025-05-13
+2025-09-25 13:27:45,765 - data_pre_processing - INFO - Fetching data for period: 2025-05-14
+2025-09-25 13:27:46,007 - data_pre_processing - INFO - Fetching data for period: 2025-05-15
+2025-09-25 13:27:46,221 - data_pre_processing - INFO - Fetching data for period: 2025-05-16
+2025-09-25 13:27:46,449 - data_pre_processing - INFO - Fetching data for period: 2025-05-17
+2025-09-25 13:27:46,667 - data_pre_processing - INFO - Fetching data for period: 2025-05-18
+2025-09-25 13:27:46,884 - data_pre_processing - INFO - Fetching data for period: 2025-05-19
+2025-09-25 13:27:47,113 - data_pre_processing - INFO - Fetching data for period: 2025-05-20
+2025-09-25 13:27:47,320 - data_pre_processing - INFO - Fetching data for period: 2025-05-21
+2025-09-25 13:27:47,549 - data_pre_processing - INFO - Fetching data for period: 2025-05-22
+2025-09-25 13:27:47,784 - data_pre_processing - INFO - Fetching data for period: 2025-05-23
+2025-09-25 13:27:48,027 - data_pre_processing - INFO - Fetching data for period: 2025-05-24
+2025-09-25 13:27:48,245 - data_pre_processing - INFO - Fetching data for period: 2025-05-25
+2025-09-25 13:27:48,477 - data_pre_processing - INFO - Fetching data for period: 2025-05-26
+2025-09-25 13:27:48,695 - data_pre_processing - INFO - Fetching data for period: 2025-05-27
+2025-09-25 13:27:48,904 - data_pre_processing - INFO - Fetching data for period: 2025-05-28
+2025-09-25 13:27:49,111 - data_pre_processing - INFO - Fetching data for period: 2025-05-29
+2025-09-25 13:27:49,319 - data_pre_processing - INFO - Fetching data for period: 2025-05-30
+2025-09-25 13:27:49,543 - data_pre_processing - INFO - Fetching data for period: 2025-05-31
+2025-09-25 13:27:49,763 - data_pre_processing - INFO - Fetching data for period: 2025-06-01
+2025-09-25 13:27:49,994 - data_pre_processing - INFO - Fetching data for period: 2025-06-02
+2025-09-25 13:27:50,214 - data_pre_processing - INFO - Fetching data for period: 2025-06-03
+2025-09-25 13:27:50,417 - data_pre_processing - INFO - Fetching data for period: 2025-06-04
+2025-09-25 13:27:50,612 - data_pre_processing - INFO - Fetching data for period: 2025-06-05
+2025-09-25 13:27:50,837 - data_pre_processing - INFO - Fetching data for period: 2025-06-06
+2025-09-25 13:27:51,026 - data_pre_processing - INFO - Fetching data for period: 2025-06-07
+2025-09-25 13:27:51,224 - data_pre_processing - INFO - Fetching data for period: 2025-06-08
+2025-09-25 13:27:51,437 - data_pre_processing - INFO - Fetching data for period: 2025-06-09
+2025-09-25 13:27:51,678 - data_pre_processing - INFO - Fetching data for period: 2025-06-10
+2025-09-25 13:27:51,898 - data_pre_processing - INFO - Fetching data for period: 2025-06-11
+2025-09-25 13:27:52,116 - data_pre_processing - INFO - Fetching data for period: 2025-06-12
+2025-09-25 13:27:52,352 - data_pre_processing - INFO - Fetching data for period: 2025-06-13
+2025-09-25 13:27:52,664 - data_pre_processing - INFO - Fetching data for period: 2025-06-14
+2025-09-25 13:27:52,896 - data_pre_processing - INFO - Fetching data for period: 2025-06-15
+2025-09-25 13:27:53,153 - data_pre_processing - INFO - Fetching data for period: 2025-06-16
+2025-09-25 13:27:53,396 - data_pre_processing - INFO - Fetching data for period: 2025-06-17
+2025-09-25 13:27:53,629 - data_pre_processing - INFO - Fetching data for period: 2025-06-18
+2025-09-25 13:27:53,856 - data_pre_processing - INFO - Fetching data for period: 2025-06-19
+2025-09-25 13:27:54,070 - data_pre_processing - INFO - Fetching data for period: 2025-06-20
+2025-09-25 13:27:54,338 - data_pre_processing - INFO - Fetching data for period: 2025-06-21
+2025-09-25 13:27:54,569 - data_pre_processing - INFO - Fetching data for period: 2025-06-22
+2025-09-25 13:27:54,811 - data_pre_processing - INFO - Fetching data for period: 2025-06-23
+2025-09-25 13:27:55,032 - data_pre_processing - INFO - Fetching data for period: 2025-06-24
+2025-09-25 13:27:55,278 - data_pre_processing - INFO - Fetching data for period: 2025-06-25
+2025-09-25 13:27:55,518 - data_pre_processing - INFO - Fetching data for period: 2025-06-26
+2025-09-25 13:27:55,752 - data_pre_processing - INFO - Fetching data for period: 2025-06-27
+2025-09-25 13:27:55,963 - data_pre_processing - INFO - Fetching data for period: 2025-06-28
+2025-09-25 13:27:56,183 - data_pre_processing - INFO - Fetching data for period: 2025-06-29
+2025-09-25 13:27:56,402 - data_pre_processing - INFO - Fetching data for period: 2025-06-30
+2025-09-25 13:27:56,629 - data_pre_processing - INFO - Fetching data for period: 2025-07-01
+2025-09-25 13:27:56,851 - data_pre_processing - INFO - Fetching data for period: 2025-07-02
+2025-09-25 13:27:57,100 - data_pre_processing - INFO - Fetching data for period: 2025-07-03
+2025-09-25 13:27:57,317 - data_pre_processing - INFO - Fetching data for period: 2025-07-04
+2025-09-25 13:27:57,544 - data_pre_processing - INFO - Fetching data for period: 2025-07-05
+2025-09-25 13:27:57,783 - data_pre_processing - INFO - Fetching data for period: 2025-07-06
+2025-09-25 13:27:58,000 - data_pre_processing - INFO - Fetching data for period: 2025-07-07
+2025-09-25 13:27:58,223 - data_pre_processing - INFO - Fetching data for period: 2025-07-08
+2025-09-25 13:27:58,439 - data_pre_processing - INFO - Fetching data for period: 2025-07-09
+2025-09-25 13:27:58,694 - data_pre_processing - INFO - Fetching data for period: 2025-07-10
+2025-09-25 13:27:58,930 - data_pre_processing - INFO - Fetching data for period: 2025-07-11
+2025-09-25 13:27:59,150 - data_pre_processing - INFO - Fetching data for period: 2025-07-12
+2025-09-25 13:27:59,355 - data_pre_processing - INFO - Fetching data for period: 2025-07-13
+2025-09-25 13:27:59,582 - data_pre_processing - INFO - Fetching data for period: 2025-07-14
+2025-09-25 13:27:59,908 - data_pre_processing - INFO - Fetching data for period: 2025-07-15
+2025-09-25 13:28:00,130 - data_pre_processing - INFO - Fetching data for period: 2025-07-16
+2025-09-25 13:28:00,343 - data_pre_processing - INFO - Fetching data for period: 2025-07-17
+2025-09-25 13:28:00,558 - data_pre_processing - INFO - Fetching data for period: 2025-07-18
+2025-09-25 13:28:00,766 - data_pre_processing - INFO - Fetching data for period: 2025-07-19
+2025-09-25 13:28:01,009 - data_pre_processing - INFO - Fetching data for period: 2025-07-20
+2025-09-25 13:28:01,329 - data_pre_processing - INFO - Fetching data for period: 2025-07-21
+2025-09-25 13:28:01,605 - data_pre_processing - INFO - Fetching data for period: 2025-07-22
+2025-09-25 13:28:01,874 - data_pre_processing - INFO - Fetching data for period: 2025-07-23
+2025-09-25 13:28:02,169 - data_pre_processing - INFO - Fetching data for period: 2025-07-24
+2025-09-25 13:28:02,408 - data_pre_processing - INFO - Fetching data for period: 2025-07-25
+2025-09-25 13:28:02,638 - data_pre_processing - INFO - Fetching data for period: 2025-07-26
+2025-09-25 13:28:02,851 - data_pre_processing - INFO - Fetching data for period: 2025-07-27
+2025-09-25 13:28:03,093 - data_pre_processing - INFO - Fetching data for period: 2025-07-28
+2025-09-25 13:28:03,322 - data_pre_processing - INFO - Fetching data for period: 2025-07-29
+2025-09-25 13:28:03,543 - data_pre_processing - INFO - Fetching data for period: 2025-07-30
+2025-09-25 13:28:03,770 - data_pre_processing - INFO - Fetching data for period: 2025-07-31
+2025-09-25 13:28:04,355 - data_pre_processing - INFO - Fetching data for period: 2025-08-01
+2025-09-25 13:28:04,568 - data_pre_processing - INFO - Fetching data for period: 2025-08-02
+2025-09-25 13:28:04,790 - data_pre_processing - INFO - Fetching data for period: 2025-08-03
+2025-09-25 13:28:05,006 - data_pre_processing - INFO - Fetching data for period: 2025-08-04
+2025-09-25 13:28:05,292 - data_pre_processing - INFO - Fetching data for period: 2025-08-05
+2025-09-25 13:28:05,559 - data_pre_processing - INFO - Fetching data for period: 2025-08-06
+2025-09-25 13:28:05,792 - data_pre_processing - INFO - Fetching data for period: 2025-08-07
+2025-09-25 13:28:06,012 - data_pre_processing - INFO - Fetching data for period: 2025-08-08
+2025-09-25 13:28:06,222 - data_pre_processing - INFO - Fetching data for period: 2025-08-09
+2025-09-25 13:28:06,455 - data_pre_processing - INFO - Fetching data for period: 2025-08-10
+2025-09-25 13:28:06,679 - data_pre_processing - INFO - Fetching data for period: 2025-08-11
+2025-09-25 13:28:06,877 - data_pre_processing - INFO - Fetching data for period: 2025-08-12
+2025-09-25 13:28:07,102 - data_pre_processing - INFO - Fetching data for period: 2025-08-13
+2025-09-25 13:28:07,315 - data_pre_processing - INFO - Fetching data for period: 2025-08-14
+2025-09-25 13:28:07,508 - data_pre_processing - INFO - Fetching data for period: 2025-08-15
+2025-09-25 13:28:07,704 - data_pre_processing - INFO - Fetching data for period: 2025-08-16
+2025-09-25 13:28:07,894 - data_pre_processing - INFO - Fetching data for period: 2025-08-17
+2025-09-25 13:28:08,099 - data_pre_processing - INFO - Fetching data for period: 2025-08-18
+2025-09-25 13:28:08,308 - data_pre_processing - INFO - Fetching data for period: 2025-08-19
+2025-09-25 13:28:08,503 - data_pre_processing - INFO - Fetching data for period: 2025-08-20
+2025-09-25 13:28:08,706 - data_pre_processing - INFO - Fetching data for period: 2025-08-21
+2025-09-25 13:28:08,908 - data_pre_processing - INFO - Fetching data for period: 2025-08-22
+2025-09-25 13:28:09,133 - data_pre_processing - INFO - Fetching data for period: 2025-08-23
+2025-09-25 13:28:09,401 - data_pre_processing - INFO - Fetching data for period: 2025-08-24
+2025-09-25 13:28:09,649 - data_pre_processing - INFO - Fetching data for period: 2025-08-25
+2025-09-25 13:28:09,842 - data_pre_processing - INFO - Fetching data for period: 2025-08-26
+2025-09-25 13:28:10,055 - data_pre_processing - INFO - Fetching data for period: 2025-08-27
+2025-09-25 13:28:10,300 - data_pre_processing - INFO - Fetching data for period: 2025-08-28
+2025-09-25 13:28:10,488 - data_pre_processing - INFO - Fetching data for period: 2025-08-29
+2025-09-25 13:28:10,712 - data_pre_processing - INFO - Fetching data for period: 2025-08-30
+2025-09-25 13:28:11,066 - data_pre_processing - INFO - Fetching data for period: 2025-08-31
+2025-09-25 13:28:11,288 - data_pre_processing - INFO - Fetching data for period: 2025-09-01
+2025-09-25 13:28:11,591 - data_pre_processing - INFO - Fetching data for period: 2025-09-02
+2025-09-25 13:28:11,854 - data_pre_processing - INFO - Fetching data for period: 2025-09-03
+2025-09-25 13:28:12,099 - data_pre_processing - INFO - Fetching data for period: 2025-09-04
+2025-09-25 13:28:12,423 - data_pre_processing - INFO - Fetching data for period: 2025-09-05
+2025-09-25 13:28:12,666 - data_pre_processing - INFO - Fetching data for period: 2025-09-06
+2025-09-25 13:28:12,925 - data_pre_processing - INFO - Fetching data for period: 2025-09-07
+2025-09-25 13:28:13,154 - data_pre_processing - INFO - Fetching data for period: 2025-09-08
+2025-09-25 13:28:13,379 - data_pre_processing - INFO - Fetching data for period: 2025-09-09
+2025-09-25 13:28:13,578 - data_pre_processing - INFO - Fetching data for period: 2025-09-10
+2025-09-25 13:28:13,821 - data_pre_processing - INFO - Fetching data for period: 2025-09-11
+2025-09-25 13:28:14,047 - data_pre_processing - INFO - Fetching data for period: 2025-09-12
+2025-09-25 13:28:14,295 - data_pre_processing - INFO - Fetching data for period: 2025-09-13
+2025-09-25 13:28:14,587 - data_pre_processing - INFO - Fetching data for period: 2025-09-14
+2025-09-25 13:28:14,808 - data_pre_processing - INFO - Fetching data for period: 2025-09-15
+2025-09-25 13:28:15,053 - data_pre_processing - INFO - Fetching data for period: 2025-09-16
+2025-09-25 13:28:15,307 - data_pre_processing - INFO - Fetching data for period: 2025-09-17
+2025-09-25 13:28:15,848 - data_pre_processing - INFO - Fetching data for period: 2025-09-18
+2025-09-25 13:28:16,088 - data_pre_processing - INFO - Fetching data for period: 2025-09-19
+2025-09-25 13:28:16,330 - data_pre_processing - INFO - Fetching data for period: 2025-09-20
+2025-09-25 13:28:16,569 - data_pre_processing - INFO - Fetching data for period: 2025-09-21
+2025-09-25 13:28:16,815 - data_pre_processing - INFO - Fetching data for period: 2025-09-22
+2025-09-25 13:28:17,105 - data_pre_processing - INFO - Fetching data for period: 2025-09-23
+2025-09-25 13:28:17,363 - data_pre_processing - INFO - Fetching data for period: 2025-09-24
+2025-09-25 13:28:17,614 - data_pre_processing - INFO - Fetching data for period: 2025-09-25
+2025-09-25 13:28:17,846 - data_pre_processing - INFO - Getting activities data...
+2025-09-25 13:28:19,263 - data_pre_processing - INFO - Starting combination of dataframes...
+2025-09-25 13:28:19,352 - data_pre_processing - INFO - Pre-Processing finished.
+2025-09-25 13:28:19,433 - data_pre_processing - INFO - Handling Missing Values
+2025-09-25 13:28:19,435 - data_pre_processing - ERROR - Error during filling 0 (NA) of column "['abnormalHeartRateAlertsCount'] not found in axis"
+Traceback (most recent call last):
+  File "c:\Users\rfo7799\Desktop\Git\HealthData\data_pre_processing.py", line 334, in preprocessing_garmin_data
+    total_df.drop(col, axis=1, inplace=True)
+  File "c:\Users\rfo7799\AppData\Local\Programs\Python\Python311\Lib\site-packages\pandas\util\_decorators.py", line 331, in wrapper
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "c:\Users\rfo7799\AppData\Local\Programs\Python\Python311\Lib\site-packages\pandas\core\frame.py", line 5399, in drop
+    return super().drop(
+           ^^^^^^^^^^^^^
+  File "c:\Users\rfo7799\AppData\Local\Programs\Python\Python311\Lib\site-packages\pandas\util\_decorators.py", line 331, in wrapper
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "c:\Users\rfo7799\AppData\Local\Programs\Python\Python311\Lib\site-packages\pandas\core\generic.py", line 4505, in drop
+    obj = obj._drop_axis(labels, axis, level=level, errors=errors)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "c:\Users\rfo7799\AppData\Local\Programs\Python\Python311\Lib\site-packages\pandas\core\generic.py", line 4546, in _drop_axis
+    new_axis = axis.drop(labels, errors=errors)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "c:\Users\rfo7799\AppData\Local\Programs\Python\Python311\Lib\site-packages\pandas\core\indexes\base.py", line 6934, in drop
+    raise KeyError(f"{list(labels[mask])} not found in axis")
+KeyError: "['abnormalHeartRateAlertsCount'] not found in axis"
+2025-09-25 13:28:19,519 - data_pre_processing - ERROR - Error during filling 0 (NA) of column "['bodyBatteryAtWakeTime'] not found in axis"
+Traceback (most recent call last):
+  File "c:\Users\rfo7799\Desktop\Git\HealthData\data_pre_processing.py", line 334, in preprocessing_garmin_data
+    total_df.drop(col, axis=1, inplace=True)
+  File "c:\Users\rfo7799\AppData\Local\Programs\Python\Python311\Lib\site-packages\pandas\util\_decorators.py", line 331, in wrapper
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "c:\Users\rfo7799\AppData\Local\Programs\Python\Python311\Lib\site-packages\pandas\core\frame.py", line 5399, in drop
+    return super().drop(
+           ^^^^^^^^^^^^^
+  File "c:\Users\rfo7799\AppData\Local\Programs\Python\Python311\Lib\site-packages\pandas\util\_decorators.py", line 331, in wrapper
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "c:\Users\rfo7799\AppData\Local\Programs\Python\Python311\Lib\site-packages\pandas\core\generic.py", line 4505, in drop
+    obj = obj._drop_axis(labels, axis, level=level, errors=errors)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "c:\Users\rfo7799\AppData\Local\Programs\Python\Python311\Lib\site-packages\pandas\core\generic.py", line 4546, in _drop_axis
+    new_axis = axis.drop(labels, errors=errors)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "c:\Users\rfo7799\AppData\Local\Programs\Python\Python311\Lib\site-packages\pandas\core\indexes\base.py", line 6934, in drop
+    raise KeyError(f"{list(labels[mask])} not found in axis")
+KeyError: "['bodyBatteryAtWakeTime'] not found in axis"
+2025-09-25 13:28:19,532 - data_pre_processing - ERROR - Error during filling 0 (NA) of column 'ActivitySteps'
+Traceback (most recent call last):
+  File "c:\Users\rfo7799\AppData\Local\Programs\Python\Python311\Lib\site-packages\pandas\core\indexes\base.py", line 3802, in get_loc
+    return self._engine.get_loc(casted_key)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "pandas\_libs\index.pyx", line 138, in pandas._libs.index.IndexEngine.get_loc
+  File "pandas\_libs\index.pyx", line 165, in pandas._libs.index.IndexEngine.get_loc
+  File "pandas\_libs\hashtable_class_helper.pxi", line 5745, in pandas._libs.hashtable.PyObjectHashTable.get_item
+  File "pandas\_libs\hashtable_class_helper.pxi", line 5753, in pandas._libs.hashtable.PyObjectHashTable.get_item
+KeyError: 'ActivitySteps'
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "c:\Users\rfo7799\Desktop\Git\HealthData\data_pre_processing.py", line 350, in preprocessing_garmin_data
+    total_df[col].fillna(0, inplace=True)
+    ~~~~~~~~^^^^^
+  File "c:\Users\rfo7799\AppData\Local\Programs\Python\Python311\Lib\site-packages\pandas\core\frame.py", line 3807, in __getitem__
+    indexer = self.columns.get_loc(key)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "c:\Users\rfo7799\AppData\Local\Programs\Python\Python311\Lib\site-packages\pandas\core\indexes\base.py", line 3804, in get_loc
+    raise KeyError(key) from err
+KeyError: 'ActivitySteps'
+2025-09-25 13:28:19,534 - data_pre_processing - ERROR - Error during filling 0 (NA) of column 'steps_y'
+Traceback (most recent call last):
+  File "c:\Users\rfo7799\AppData\Local\Programs\Python\Python311\Lib\site-packages\pandas\core\indexes\base.py", line 3802, in get_loc
+    return self._engine.get_loc(casted_key)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "pandas\_libs\index.pyx", line 138, in pandas._libs.index.IndexEngine.get_loc
+  File "pandas\_libs\index.pyx", line 165, in pandas._libs.index.IndexEngine.get_loc
+  File "pandas\_libs\hashtable_class_helper.pxi", line 5745, in pandas._libs.hashtable.PyObjectHashTable.get_item
+  File "pandas\_libs\hashtable_class_helper.pxi", line 5753, in pandas._libs.hashtable.PyObjectHashTable.get_item
+KeyError: 'steps_y'
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "c:\Users\rfo7799\Desktop\Git\HealthData\data_pre_processing.py", line 350, in preprocessing_garmin_data
+    total_df[col].fillna(0, inplace=True)
+    ~~~~~~~~^^^^^
+  File "c:\Users\rfo7799\AppData\Local\Programs\Python\Python311\Lib\site-packages\pandas\core\frame.py", line 3807, in __getitem__
+    indexer = self.columns.get_loc(key)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "c:\Users\rfo7799\AppData\Local\Programs\Python\Python311\Lib\site-packages\pandas\core\indexes\base.py", line 3804, in get_loc
+    raise KeyError(key) from err
+KeyError: 'steps_y'
+2025-09-25 13:28:19,537 - data_pre_processing - ERROR - Error during filling 0 (NA) of column 'pushes'
+Traceback (most recent call last):
+  File "c:\Users\rfo7799\AppData\Local\Programs\Python\Python311\Lib\site-packages\pandas\core\indexes\base.py", line 3802, in get_loc
+    return self._engine.get_loc(casted_key)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "pandas\_libs\index.pyx", line 138, in pandas._libs.index.IndexEngine.get_loc
+  File "pandas\_libs\index.pyx", line 165, in pandas._libs.index.IndexEngine.get_loc
+  File "pandas\_libs\hashtable_class_helper.pxi", line 5745, in pandas._libs.hashtable.PyObjectHashTable.get_item
+  File "pandas\_libs\hashtable_class_helper.pxi", line 5753, in pandas._libs.hashtable.PyObjectHashTable.get_item
+KeyError: 'pushes'
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "c:\Users\rfo7799\Desktop\Git\HealthData\data_pre_processing.py", line 350, in preprocessing_garmin_data
+    total_df[col].fillna(0, inplace=True)
+    ~~~~~~~~^^^^^
+  File "c:\Users\rfo7799\AppData\Local\Programs\Python\Python311\Lib\site-packages\pandas\core\frame.py", line 3807, in __getitem__
+    indexer = self.columns.get_loc(key)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "c:\Users\rfo7799\AppData\Local\Programs\Python\Python311\Lib\site-packages\pandas\core\indexes\base.py", line 3804, in get_loc
+    raise KeyError(key) from err
+KeyError: 'pushes'

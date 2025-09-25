@@ -5,7 +5,7 @@ from google.cloud import bigquery
 import os
 
 # Assume this file exists in the same directory.
-from data_pre_processing import clean_data
+from data_pre_processing import preprocessing_garmin_data
 
 # --- BIGQUERY CLIENT (REAL IMPLEMENTATION) ---
 # Ensure you have your Google Cloud credentials configured.
